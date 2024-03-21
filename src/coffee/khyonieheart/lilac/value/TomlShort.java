@@ -8,6 +8,7 @@ public class TomlShort implements Commentable, TomlObject<Short>
 	private NumberBase base = NumberBase.DECIMAL;
 	private short value;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlShort(
 		short value
@@ -71,5 +72,17 @@ public class TomlShort implements Commentable, TomlObject<Short>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

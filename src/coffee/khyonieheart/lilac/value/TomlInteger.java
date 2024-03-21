@@ -8,6 +8,7 @@ public class TomlInteger implements Commentable, TomlObject<Integer>
 	private NumberBase base = NumberBase.DECIMAL;
 	private int value;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlInteger(
 		int value
@@ -71,5 +72,17 @@ public class TomlInteger implements Commentable, TomlObject<Integer>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

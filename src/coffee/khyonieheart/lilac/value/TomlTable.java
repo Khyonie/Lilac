@@ -23,6 +23,7 @@ public class TomlTable implements Commentable, TomlObject<Map<String, TomlObject
 	private String discreteIdentifier = null;
 	private List<String> parentTables = null;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlTable(
 		String identifier,
@@ -98,5 +99,17 @@ public class TomlTable implements Commentable, TomlObject<Map<String, TomlObject
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

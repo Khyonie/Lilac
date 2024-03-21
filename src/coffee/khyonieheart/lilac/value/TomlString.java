@@ -8,6 +8,7 @@ public class TomlString implements Commentable, TomlObject<String>, CharSequence
 	private String string = null;
 	private String comment;
 	private TomlStringType type = TomlStringType.BASIC;
+	private int newlines = 0;
 
 	public TomlString(
 		String string
@@ -73,5 +74,17 @@ public class TomlString implements Commentable, TomlObject<String>, CharSequence
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

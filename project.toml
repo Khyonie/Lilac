@@ -20,7 +20,7 @@ output = [ "target/{TASK_NAME}/Lilac.jar" ]
 
 # Libraries, individual .jar files will be added to the classpath when building and running. Folders will have their contents added recursively
 # After changing this, run wisteria update to update the classpath and reflect any changes
-libraries = [ "lib/" ]
+# libraries = [ "lib/" ]
 
 # Individual .jar files to be shaded in with every target (that is, their contained classes will be stored inside each target)
 # Shaded jars will be included on the compilation classpath but will not be included in an automatically generated MANIFEST.MF classpath
@@ -28,7 +28,7 @@ libraries = [ "lib/" ]
 
 # If your project is an executable, specify the entry point (where your static void main() is)
 # This setting is required to run a task as executable
-#entry = "coffee.khyonieheart.lilac.Toml"
+entry = "coffee.khyonieheart.lilac.Toml"
 
 # Files to package in when building this task
 #include = []

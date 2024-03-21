@@ -6,6 +6,7 @@ public class TomlBoolean implements Commentable, TomlObject<Boolean>
 {
 	private boolean value;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlBoolean(
 		boolean value
@@ -42,5 +43,17 @@ public class TomlBoolean implements Commentable, TomlObject<Boolean>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

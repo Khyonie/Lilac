@@ -16,6 +16,7 @@ public class TomlArray implements Commentable, TomlObject<List<TomlObject<?>>>
 {
 	private List<TomlObject<?>> data = new ArrayList<>();
 	private String comment;
+	private int newlines = 0;
 
 	public TomlArray(
 		TomlObject<?>... objects
@@ -77,5 +78,17 @@ public class TomlArray implements Commentable, TomlObject<List<TomlObject<?>>>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

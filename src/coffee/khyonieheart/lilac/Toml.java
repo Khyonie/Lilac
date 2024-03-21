@@ -59,6 +59,19 @@ mixed_float = 3.0e-10
 bool_true = true 
 bool_false = false
 """;
+	/*
+	public static void main(String[] args)
+	{
+		TomlBuilder builder = builder().setPreserveComments(true);
+		try {
+			Map<String, TomlObject<?>> data = builder.parseString(testDocument);
+
+			System.out.println(builder.toTomlFromTable(data));
+		} catch (TomlSyntaxException e) {
+			e.printStackTrace();
+		}
+	}
+	*/
 
 	public static TomlBuilder builder()
 	{

@@ -6,6 +6,7 @@ public class TomlDouble implements Commentable, TomlObject<Double>
 {
 	private double value;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlDouble(
 		double value
@@ -42,5 +43,17 @@ public class TomlDouble implements Commentable, TomlObject<Double>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

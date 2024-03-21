@@ -6,6 +6,7 @@ public class TomlFloat implements Commentable, TomlObject<Float>
 {
 	private float value;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlFloat(
 		float value
@@ -42,5 +43,17 @@ public class TomlFloat implements Commentable, TomlObject<Float>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

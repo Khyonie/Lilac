@@ -16,6 +16,5 @@ public enum TomlObjectType
 	LOCAL_TIME,
 	ARRAY,
 	TABLE,
-	COMMENT,
-	EMPTY_LINE
+	COMMENT
 }

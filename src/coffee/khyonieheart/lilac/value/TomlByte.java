@@ -8,6 +8,7 @@ public class TomlByte implements Commentable, TomlObject<Byte>
 	private NumberBase base = NumberBase.DECIMAL;
 	private byte value;
 	private String comment;
+	private int newlines = 0;
 
 	public TomlByte(
 		byte value
@@ -71,5 +72,17 @@ public class TomlByte implements Commentable, TomlObject<Byte>
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

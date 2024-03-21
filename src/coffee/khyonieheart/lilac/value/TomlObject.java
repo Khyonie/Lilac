@@ -7,4 +7,7 @@ public interface TomlObject<T>
 	public TomlObjectType getType();
 
 	public String serialize();
+
+	public int getNumberOfTrailingNewlines();
+	public void incrementTrailingNewlines();
 }

@@ -6,6 +6,7 @@ import coffee.khyonieheart.lilac.value.TomlObjectType;
 public class TomlComment implements TomlObject<String>
 {
 	private String comment;
+	private int newlines = 0;
 
 	public TomlComment(
 		String comment
@@ -29,5 +30,17 @@ public class TomlComment implements TomlObject<String>
 	public String serialize() 
 	{
 		return "#" + this.comment; 
+	}
+
+	@Override
+	public int getNumberOfTrailingNewlines() 
+	{
+		return this.newlines;
+	}
+
+	@Override
+	public void incrementTrailingNewlines() 
+	{
+		this.newlines++;
 	}
 }

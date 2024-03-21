@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Scanner;
@@ -113,7 +114,7 @@ public class LilacTomlBuilder implements TomlBuilder
 			{
 				break;
 			}
-			//("Character at position " + offset[0] + ": \"" + document.charAt(offset[0]) + "\"");
+			//System.out.println("Character at position " + offset[0] + ": \"" + document.charAt(offset[0]) + "\"");
 		}
 
 		if (offset[0] < (document.length() - 1))
@@ -124,7 +125,6 @@ public class LilacTomlBuilder implements TomlBuilder
 
 	/**
 	 * TomlConstruct
-	 * > EmptyLine
 	 * > FullLineComment 
 	 * > DiscreteTable
 	 * > KeyValuePair
@@ -137,47 +137,38 @@ public class LilacTomlBuilder implements TomlBuilder
 	) 
 		throws TomlSyntaxException
 	{
-		//("[ TomlConstruct ] Parsing new construct");
-		if (consumeNewLine(document, offset))
+		//System.out.println("[ TomlConstruct ] Parsing new construct");
+
+		Optional<TomlComment> comment = comment(document, offset);
+		if (comment.isPresent())
 		{
-			int whitelineIndex = 0;
-			String key = "TOML_WHITESPACE";
-			while (data.containsKey(key + whitelineIndex))
+			consumeWhitespace(document, offset);
+			int commentIndex = 0;
+			String key = "TOML_FULL_LINE_COMMENT";
+			while (data.containsKey(key + commentIndex))
 			{
-				whitelineIndex++;
+				commentIndex++;
 			}
 
-			// TODO This is broken
-			// data.put(key + whitelineIndex, new FormattingWhiteSpace());
+			if (this.preservesComments)
+			{
+				data.put(key + commentIndex, comment.get());
+			}
+			while (consumeNewLine(document, offset))
+			{
+				comment.get().incrementTrailingNewlines();
+			}
+
+			//System.out.println("[ TomlConstruct ] #################### Found a comment at position " + offset[0] + " ####################");
 			return true;
 		}
 
-		if (this.preservesComments)
-		{
-			Optional<TomlComment> comment = comment(document, offset);
+		//System.out.println("[ TomlConstruct ] Did not find a comment at position " + offset[0]);
 
-			if (comment.isPresent())
-			{
-				consumeWhitespace(document, offset);
-				int commentIndex = 0;
-				String key = "TOML_FULL_LINE_COMMENT";
-				while (data.containsKey(key + commentIndex))
-				{
-					commentIndex++;
-				}
-
-				data.put(key + commentIndex, comment.get());
-				//("[ TomlConstruct ] #################### Found a comment at position " + offset[0] + " ####################");
-				return true;
-			}
-		}
-
-		//("[ TomlConstruct ] Did not find a comment at position " + offset[0]);
-		
 		Optional<TomlTable> table = discreteTable(document, offset, data, parents);
 		if (table.isPresent())
 		{
-			//("[ TomlConstruct ] #################### Found a discrete table \"" + table.get().getKey() + "\" at position " + offset[0] + " ####################");
+			//System.out.println("[ TomlConstruct ] #################### Found a discrete table \"" + table.get().getKey() + "\" at position " + offset[0] + " ####################");
 			consumeWhitespace(document, offset);
 
 			TomlTable t = table.get();
@@ -188,7 +179,7 @@ public class LilacTomlBuilder implements TomlBuilder
 				if (!targetData.containsKey(k))
 				{
 					targetData.put(k, new TomlTable(new ArrayList<>(parents)));
-					//("> [ TomlConstruct ] Inserted new subtable \"" + k + "\"");
+					//System.out.println("> [ TomlConstruct ] Inserted new subtable \"" + k + "\"");
 				}
 
 				parents.push(k);
@@ -210,15 +201,15 @@ public class LilacTomlBuilder implements TomlBuilder
 			return true;
 		}
 
-		//("[ TomlConstruct ] Did not find a discrete table at position " + offset[0]);
+		//System.out.println("[ TomlConstruct ] Did not find a discrete table at position " + offset[0]);
 
 		if (keyValuePair(document, offset, data, parents))
 		{
-			//("→ [ TomlConstruct ] #################### Found a key/value pair at position " + offset[0] + " ####################");
+			//System.out.println("→ [ TomlConstruct ] #################### Found a key/value pair at position " + offset[0] + " ####################");
 			return true;
 		}
 
-		//("← [ TomlConstruct ] Did not find a key/value pair at position " + offset[0]);
+		//System.out.println("← [ TomlConstruct ] Did not find a key/value pair at position " + offset[0]);
 
 		return false;
 	}
@@ -261,6 +252,13 @@ public class LilacTomlBuilder implements TomlBuilder
 			table.setComment(comment.get().get());
 		}
 
+		while (this.consumeNewLine(document, offset))
+		{
+			table.incrementTrailingNewlines();
+		}
+
+		consumeNewLine(document, offset);
+
 		return Optional.of(table);
 	}
 
@@ -279,7 +277,7 @@ public class LilacTomlBuilder implements TomlBuilder
 		Optional<String> identity = keyIdentity(document, offset, data, parents);
 		if (identity.isEmpty())
 		{
-			//("[ Key ] No key identity found at position " + offset[0]);
+			//System.out.println("[ Key ] No key identity found at position " + offset[0]);
 			return Optional.empty();
 		}
 
@@ -314,15 +312,15 @@ public class LilacTomlBuilder implements TomlBuilder
 		Map<String, TomlObject<?>> data,
 		Deque<String> parents
 	) {
-		//("[ KeyIdentity ] Searching for a normal key at position " + offset[0]);
+		//System.out.println("[ KeyIdentity ] Searching for a normal key at position " + offset[0]);
 		Optional<String> key = normalkey(document, offset);
 		if (key.isPresent())
 		{
-			//("[ KeyIdentity ] Found a normal key \"" + key.get() + "\"");
+			//System.out.println("[ KeyIdentity ] Found a normal key \"" + key.get() + "\"");
 			return key;
 		}
 
-		//("[ KeyIdentity ] Searching for a quoted key at position " + offset[0]);
+		//System.out.println("[ KeyIdentity ] Searching for a quoted key at position " + offset[0]);
 		return quotedKey(document, offset, data, parents);
 	}
 
@@ -378,7 +376,7 @@ public class LilacTomlBuilder implements TomlBuilder
 		while (!parentsCopy.isEmpty())
 		{
 			parent = parentsCopy.removeLast();
-			//(">>> Adding parent key copy " + parent);
+			//System.out.println(">>> Adding parent key copy " + parent);
 			
 			if (!targetTable.containsKey(parent))
 			{
@@ -392,7 +390,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 		for (String keyParent : key.get().subList(0, key.get().size() - 1))
 		{
-			//(">>> Adding parent key copy " + keyParent);
+			//System.out.println(">>> Adding parent key copy " + keyParent);
 			if (!targetTable.containsKey(keyParent))
 			{
 				targetTable.put(keyParent, new TomlTable(new ArrayList<>(subparents)));
@@ -434,26 +432,40 @@ public class LilacTomlBuilder implements TomlBuilder
 		}
 
 		TomlObject<?> value = valueOption.get();
+		//System.out.println("[ KeyValuePair ] Key: " + tableKey + ", value is of type " + value.getType().name());
 
 		if (!consumeWhitespace(document, offset))
 		{
 			targetTable.put(tableKey, value);
+			while (this.consumeNewLine(document, offset))
+			{
+				value.incrementTrailingNewlines();
+			}
 			return true;
 		}
 
 		if (literal(document, "\n", offset))
 		{
 			targetTable.put(tableKey, value);
+			while (this.consumeNewLine(document, offset))
+			{
+				value.incrementTrailingNewlines();
+			}
 			return true;
 		}
 
 		Optional<TomlComment> comment = comment(document, offset);
-		if (comment.isPresent() && value instanceof Commentable c)
+		if (comment.isPresent() && this.preservesComments && value instanceof Commentable c)
 		{
 			c.setComment(comment.get().get());
 		}
+		consumeWhitespace(document, offset);
 
-		//("[ KeyValuePair ] Key: " + tableKey + ", value is of type " + value.getType().name());
+		while (this.consumeNewLine(document, offset))
+		{
+			value.incrementTrailingNewlines();
+		}
+
 		targetTable.put(tableKey, value);
 
 		consumeWhitespace(document, offset);
@@ -967,6 +979,8 @@ public class LilacTomlBuilder implements TomlBuilder
 		}
 
 		Optional<String> comment = regex(document, "(.*)", offset);
+
+		consumeNewLine(document, offset);
 		if (comment.isEmpty())
 		{
 			return Optional.of(new TomlComment(""));
@@ -1014,11 +1028,11 @@ public class LilacTomlBuilder implements TomlBuilder
 		String literal,
 		int[] offset
 	) {
-		//("[ Literal ] Searching for literal \"" + literal + "\" (Literal at position: \"" + document.substring(offset[0], offset[0] + literal.length()) + "\")");
+		//System.out.println("[ Literal ] Searching for literal \"" + literal + "\" (Literal at position: \"" + document.substring(offset[0], offset[0] + literal.length()) + "\")");
 		if (document.substring(offset[0], offset[0] + literal.length()).equals(literal))
 		{
 			offset[0] += literal.length();
-			//("→ [ Literal ] Found literal, advancing offset to " + offset[0]);
+			//System.out.println("→ [ Literal ] Found literal, advancing offset to " + offset[0]);
 			return true;
 		}
 
@@ -1031,7 +1045,7 @@ public class LilacTomlBuilder implements TomlBuilder
 		int[] offset,
 		int group
 	) {
-		//("[ Regex ] Matching regex \"" + regex + "\"");
+		//System.out.println("[ Regex ] Matching regex \"" + regex + "\"");
 		if (!this.compiledPatterns.containsKey(regex))
 		{
 			this.compiledPatterns.put(regex, Pattern.compile(regex));
@@ -1040,7 +1054,7 @@ public class LilacTomlBuilder implements TomlBuilder
 		Matcher matcher = this.compiledPatterns.get(regex).matcher(document);
 		if (!matcher.find(offset[0]))
 		{
-			//("← [ Regex ] No match found");
+			//System.out.println("← [ Regex ] No match found");
 			return Optional.empty();
 		}
 
@@ -1048,22 +1062,22 @@ public class LilacTomlBuilder implements TomlBuilder
 		{
 			if (matcher.group(i) == null)
 			{
-				//("[ Regex ] Skipping failure to match @ start " + matcher.start(i) + " → end " + matcher.end(i));
+				//System.out.println("[ Regex ] Skipping failure to match @ start " + matcher.start(i) + " → end " + matcher.end(i));
 				continue;
 			}
-			//("[ Regex ] Match " + i + ": \"" + matcher.group(i) + "\" @ start " + matcher.start(i) + " → end " + matcher.end(i) + " (capture length " + matcher.group(i).length() + ")");
+			//System.out.println("[ Regex ] Match " + i + ": \"" + matcher.group(i) + "\" @ start " + matcher.start(i) + " → end " + matcher.end(i) + " (capture length " + matcher.group(i).length() + ")");
 		}
 
 		if (matcher.start() != offset[0])
 		{
-			//("← [ Regex ] Capture does not start at offset " + offset[0] + ", instead it started at " + matcher.start(group));
+			//System.out.println("← [ Regex ] Capture does not start at offset " + offset[0] + ", instead it started at " + matcher.start(group));
 			return Optional.empty();
 		}
 
-		//("[ Regex ] Found " + matcher.groupCount() + " matches");
-		//(" [ Regex ] Returning [ " + matcher.group(group) + " ]");
+		//System.out.println("[ Regex ] Found " + matcher.groupCount() + " matches");
+		//System.out.println(" [ Regex ] Returning [ " + matcher.group(group) + " ]");
 		offset[0] += matcher.group().length();
-		//("→ [ Regex ] Advanced offset to " + offset[0]);
+		//System.out.println("→ [ Regex ] Advanced offset to " + offset[0]);
 		return Optional.of(matcher.group(group));
 	}
 
@@ -1088,12 +1102,12 @@ public class LilacTomlBuilder implements TomlBuilder
 		{
 			if (offset[0] == document.length() - 1)
 			{
-				//("END OF DOCUMENT");
+				//System.out.println("END OF DOCUMENT");
 				return false;
 			}
 
 			offset[0]++;
-			//("→ [ Whitespace ] Consuming whitespace, new position is " + offset[0] + ", character is \"" + document.charAt(offset[0]) + "\"");
+			//System.out.println("→ [ Whitespace ] Consuming whitespace, new position is " + offset[0] + ", character is \"" + document.charAt(offset[0]) + "\"");
 		}
 
 		return true;
@@ -1103,6 +1117,11 @@ public class LilacTomlBuilder implements TomlBuilder
 		String document,
 		int[] offset
 	) {
+		if (offset[0] >= document.length())
+		{
+			return false;
+		}
+
 		if (document.charAt(offset[0]) == '\n')
 		{
 			offset[0]++;
@@ -1180,11 +1199,24 @@ public class LilacTomlBuilder implements TomlBuilder
 			parentKeyBuilder.append('.');
 		}
 
-		data.forEach((key, value) -> {
+		String key;
+		TomlObject<?> value;
+		for (Entry<String, TomlObject<?>> entry : data.entrySet())
+		{
+			key = entry.getKey();
+			value = entry.getValue();
+
 			if (this.quotedKeyCharacters.matcher(key).find())
 			{
 				key = "\"" + key + "\"";
 			}
+
+			if (key.length() == 0)
+			{
+				key = "\"\"";
+			}
+
+			//System.out.println("Serializing key " + key);
 			
 			switch (value.getType())
 			{
@@ -1193,7 +1225,6 @@ public class LilacTomlBuilder implements TomlBuilder
 				case BYTE -> builder.append(parentKeyBuilder + key + ": byte = " + value.serialize());
 				case COMMENT -> builder.append(value.serialize());
 				case DOUBLE -> builder.append(parentKeyBuilder + key + ": double = " + value.serialize());
-				case EMPTY_LINE -> {}
 				case FLOAT -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case INTEGER -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case LOCAL_DATE -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
@@ -1206,16 +1237,21 @@ public class LilacTomlBuilder implements TomlBuilder
 				case TABLE -> {
 					if (((TomlTable) value).isDiscrete())
 					{
-						builder.append(value.serialize() + "\n");
+						builder.append(value.serialize());
+						for (int i = 0; i < value.getNumberOfTrailingNewlines(); i++)
+						{
+							builder.append("\n");
+						}
 
 						mapTableToString(((TomlTable) value).get(), builder, new ArrayList<>());
-					} else {
-						int index = parents.size();
-						parents.add(key);
-						mapTableToString(((TomlTable) value).get(), builder, parents);
-						parents.remove(index);
+						continue;
 					}
-					return;
+
+					int index = parents.size();
+					parents.add(key);
+					mapTableToString(((TomlTable) value).get(), builder, parents);
+					parents.remove(index);
+					continue;
 				}
 			}
 
@@ -1227,8 +1263,13 @@ public class LilacTomlBuilder implements TomlBuilder
 				}
 			}
 
+			for (int i = 0; i < value.getNumberOfTrailingNewlines(); i++)
+			{
+				builder.append("\n");
+			}
+
 			builder.append('\n');
-		});
+		}
 	}
 
 	@Override
