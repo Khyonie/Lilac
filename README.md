@@ -18,7 +18,7 @@ assert tomlData.get("a_long").get().getClass().equals(Integer.TYPE); // We can't
 Lilac bends the TOML spec to optionally include inline type information:
 ```toml
 # TOML
-a_long: long = 10 # Ahh, much better.
+#% a_long: long = 10 # Ahh, much better.
 ```
 ```java
 // Java
