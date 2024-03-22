@@ -24,7 +24,7 @@ a_long: long = 10 # Ahh, much better.
 ```
 ```java
 // Java
-assert tomlData.get("a_long").get().getClass().equals(Long.TYPE); # Perfection.
+assert tomlData.get("a_long").get().getClass().equals(Long.TYPE); // Perfection.
 ```
 The allowed types are `byte`, `short`, `integer` (which is the default, and not included in serialization), `long`, `float` (default) and `double`. This feature is not turned on by default, as to remain 100% compliant with the TOML spec.
 
