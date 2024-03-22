@@ -70,4 +70,3 @@ No single instance of a `TomlBuilder` is expected to be thread-safe. For multith
 
 ## TODO
 - Date/time types
-- Arbitrary object serialization
