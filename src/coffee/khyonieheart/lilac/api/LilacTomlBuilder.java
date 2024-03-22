@@ -547,8 +547,6 @@ public class LilacTomlBuilder implements TomlBuilder
 			return Optional.of(booleanValue.get());
 		}
 
-		// TODO Implement temporal types
-		
 		System.out.println("Checking for table");
 		Optional<TomlInlineTable> table = inlineTable(document, offset);
 		if (table.isPresent())
