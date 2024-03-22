@@ -140,6 +140,20 @@ public class TomlConfiguration
 	}
 
 	/**
+	 * Retrieves a string with the given keys. This method may return null if no such key exists.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The string stored in the configuration at the specified key. May be null
+	 */
+	public String getString(
+		String... keys
+	) {
+		return get(String.class, keys);
+	}
+
+	/**
 	 * Retrieves a byte at the given key.
 	 * The rules for a key's format match that of the TOML spec.
 	 *
@@ -151,6 +165,20 @@ public class TomlConfiguration
 		String key
 	) {
 		return get(key, Byte.class);
+	}
+
+	/**
+	 * Retrieves a byte with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The byte stored in the configuration at the specified key.
+	 */
+	public byte getByte(
+		String... keys
+	) {
+		return get(Byte.class, keys);
 	}
 
 	/**
@@ -168,6 +196,20 @@ public class TomlConfiguration
 	}
 
 	/**
+	 * Retrieves a short with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The short stored in the configuration at the specified key.
+	 */
+	public short getShort(
+		String... keys
+	) {
+		return get(Short.class, keys);
+	}
+
+	/**
 	 * Retrieves an integer at the given key.
 	 * The rules for a key's format match that of the TOML spec.
 	 *
@@ -179,6 +221,20 @@ public class TomlConfiguration
 		String key
 	) {
 		return get(key, Integer.class);
+	}
+
+	/**
+	 * Retrieves an integer with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The integer stored in the configuration at the specified key.
+	 */
+	public int getInt(
+		String... keys
+	) {
+		return get(Integer.class, keys);
 	}
 
 	/**
@@ -196,6 +252,20 @@ public class TomlConfiguration
 	}
 
 	/**
+	 * Retrieves a long with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The long stored in the configuration at the specified key.
+	 */
+	public long getLong(
+		String... keys
+	) {
+		return get(Long.class, keys);
+	}
+
+	/**
 	 * Retrieves a float at the given key.
 	 * The rules for a key's format match that of the TOML spec.
 	 *
@@ -207,6 +277,20 @@ public class TomlConfiguration
 		String key
 	) {
 		return get(key, Float.class);
+	}
+
+	/**
+	 * Retrieves a float with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The float stored in the configuration at the specified key.
+	 */
+	public float getFloat(
+		String... keys
+	) {
+		return get(Float.class, keys);
 	}
 
 	/**
@@ -224,6 +308,20 @@ public class TomlConfiguration
 	}
 
 	/**
+	 * Retrieves a double with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The double stored in the configuration at the specified key.
+	 */
+	public double getDouble(
+		String... keys
+	) {
+		return get(Double.class, keys);
+	}
+
+	/**
 	 * Retrieves a boolean at the given key.
 	 * The rules for a key's format match that of the TOML spec.
 	 *
@@ -238,6 +336,20 @@ public class TomlConfiguration
 	}
 
 	/**
+	 * Retrieves a boolean with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The boolean stored in the configuration at the specified key.
+	 */
+	public boolean getBoolean(
+		String... keys
+	) {
+		return get(Boolean.class, keys);
+	}
+
+	/**
 	 * Retrieves an array at the given key.
 	 * The rules for a key's format match that of the TOML spec.
 	 *
@@ -249,6 +361,22 @@ public class TomlConfiguration
 	public <T> T[] getArray(
 		String key,
 		Class<T> componentType
+	) {
+		throw new UnsupportedOperationException("Array serialization/deserialization is not supported yet");
+	}
+
+	/**
+	 * Retrieves an array with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param componentType Type of object represented within the array
+	 * @param keys Key array
+	 *
+	 * @return The array stored in the configuration at the specified key.
+	 */
+	public <T> T[] getArray(
+		Class<T> componentType,
+		String... keys
 	) {
 		throw new UnsupportedOperationException("Array serialization/deserialization is not supported yet");
 	}
@@ -273,6 +401,25 @@ public class TomlConfiguration
 	}
 
 	/**
+	 * Retrieves a list with the given keys.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param listElementType Type of object represented within the list
+	 * @param keys Key array
+	 *
+	 * @return The list stored in the configuration at the specified key.
+	 *
+	 * @implNote {@link ArrayList}s are used internally. You must map the output of this method to change the type of list used.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T> List<T> getList(
+		Class<T> componentType,
+		String... keys
+	) {
+		return get(List.class, keys);
+	}
+
+	/**
 	 * Retrieves a TOML map at the given key. This map is directly representative of this configuration, and edits will affect the overall configuration.
 	 * The rules for a key's format match that of the TOML spec.
 	 *
@@ -287,6 +434,23 @@ public class TomlConfiguration
 		String key
 	) {
 		return get(key, Map.class);
+	}
+
+	/**
+	 * Retrieves a TOML map with the given keys. This map is directly representative of this configuration, and edits will affect the overall configuration.
+	 * The rules for a key's format match that of the TOML spec.
+	 *
+	 * @param keys Key array
+	 *
+	 * @return The map stored in the configuration at the specified key
+	 *
+	 * @implNote {@link LinkedHashMap}s are used internally. You must map the output of this method to change the type of map used.
+	 */
+	@SuppressWarnings("unchecked")
+	public Map<String, TomlObject<?>> getTable(
+		String... keys
+	) {
+		return get(Map.class, keys);
 	}
 
 	// Utility
