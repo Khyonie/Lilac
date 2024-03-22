@@ -1,6 +1,8 @@
 # Lilac 🌸
 Lilac is a high-performance Java 17 TOML language library with support for serialization and deserialization.
 
+Javadoc can be found [here](http://www.khyonieheart.coffee/javadoc/lilac/index.html).
+
 ## Compliance
 Lilac is fully compliant with the [v1.0.0 TOML language specification](https://toml.io/en/v1.0.0), with the only absence being inline tables and date/time types, which will be implemented at a later date.
 ## Why would I want to use Lilac?
@@ -31,7 +33,7 @@ Several popular configuration libraries do not store comment and newline informa
 ## Usage
 Start by creating a TOML Builder:
 ```java
-TomlBuilder toml = Toml.builder();
+TomlBuilder toml = Lilac.newBuilder();
 ```
 The TOML builder is used to serialize and deserialize:
 ```java
@@ -54,7 +56,7 @@ The default `TomlBuilder` implementation `LilacTomlBuilder` does not preserve co
 To enable these features, use `TomlBuilder#setPreservesComments(true)`, `TomlBuilder#setUppercaseHexadecimal(true)`, and/or `TomlBuilder.setStoreJavaTypes(true)`. 
 These methods all return the builder instance being modified, so method chaining is possible:
 ```java
-TomlBuilder toml = Toml.builder()
+TomlBuilder toml = Lilac.builder()
   .setPreservesComments(true)
   .setUppercaseHexadecimal(true)
   .setStoreJavaTypes(true);
