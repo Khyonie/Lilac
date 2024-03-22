@@ -1,12 +1,6 @@
 package coffee.khyonieheart.lilac;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
 import coffee.khyonieheart.lilac.api.LilacTomlBuilder;
-import coffee.khyonieheart.lilac.value.TomlObject;
-import coffee.khyonieheart.lilac.value.TomlObjectType;
-import coffee.khyonieheart.lilac.value.TomlTable;
 
 /**
  * Root class for the Lilac TOML library.
@@ -82,7 +76,6 @@ mixed_float = 3.0e-10
 bool_true = true 
 bool_false = false
 """;
-*/
 
 	public static void main(String[] args)
 	{
@@ -115,4 +108,5 @@ bool_false = false
 			System.out.println(" -".repeat(depth) + " " + key + "(" + value.getType().name() + "): " + value.serialize());
 		}
 	}
+*/
 }
