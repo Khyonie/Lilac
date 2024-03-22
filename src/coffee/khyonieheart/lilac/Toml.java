@@ -2,9 +2,9 @@ package coffee.khyonieheart.lilac;
 
 import coffee.khyonieheart.lilac.api.LilacTomlBuilder;
 
-@SuppressWarnings("unused")
 public class Toml
 {
+/*
 private static String testDocument = """
 [table]
 basic_key = "A value!"
@@ -59,16 +59,39 @@ mixed_float = 3.0e-10
 bool_true = true 
 bool_false = false
 """;
-	/*
+
 	public static void main(String[] args)
 	{
 		TomlBuilder builder = builder().setPreserveComments(true);
 		try {
 			Map<String, TomlObject<?>> data = builder.parseString(testDocument);
+			printToml(data, 0);
 
 			System.out.println(builder.toTomlFromTable(data));
 		} catch (TomlSyntaxException e) {
 			e.printStackTrace();
+		}
+	}
+
+	static void printToml(
+		Map<String, TomlObject<?>> table,
+		int depth
+	) {
+		String key;
+		TomlObject<?> value;
+		for (Entry<String, TomlObject<?>> entry : table.entrySet())
+		{
+			key = entry.getKey();
+			value = entry.getValue();
+
+			if (value.getType() == TomlObjectType.TABLE)
+			{
+				System.out.println(" -".repeat(depth) + " [" + key + "]");
+				printToml(((TomlTable) value).get(), depth + 1);
+				continue;
+			}
+
+			System.out.println(" -".repeat(depth) + " " + key + "(" + value.getType().name() + "): " + value.serialize());
 		}
 	}
 	*/

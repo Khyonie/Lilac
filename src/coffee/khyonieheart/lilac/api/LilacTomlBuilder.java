@@ -42,6 +42,8 @@ public class LilacTomlBuilder implements TomlBuilder
 	private Map<String, Pattern> compiledPatterns = new HashMap<>();
 	private Pattern quotedKeyCharacters = Pattern.compile("[^A-Za-z0-9_-]");
 
+	private Map<String, TomlObject<?>> commenttedTable = null;
+
 	@Override
 	public Map<String, TomlObject<?>> parseDocument(
 		File file
@@ -49,6 +51,8 @@ public class LilacTomlBuilder implements TomlBuilder
 		throws FileNotFoundException,
 			TomlSyntaxException
 	{
+		Objects.requireNonNull(file);
+
 		if (!file.exists())
 		{
 			throw new FileNotFoundException("No such file " + file.getAbsolutePath());
@@ -85,6 +89,8 @@ public class LilacTomlBuilder implements TomlBuilder
 	)
 		throws TomlSyntaxException
 	{
+		Objects.requireNonNull(string);
+
 		Map<String, TomlObject<?>> data = new LinkedHashMap<>();
 
 		tomlDocument(string, new int[] { 0 }, data, new ArrayDeque<>());
@@ -145,14 +151,16 @@ public class LilacTomlBuilder implements TomlBuilder
 			consumeWhitespace(document, offset);
 			int commentIndex = 0;
 			String key = "TOML_FULL_LINE_COMMENT";
-			while (data.containsKey(key + commentIndex))
+
+			Map<String, TomlObject<?>> target = (this.commenttedTable != null ? this.commenttedTable : data);
+			while (target.containsKey(key + commentIndex))
 			{
 				commentIndex++;
 			}
 
 			if (this.preservesComments)
 			{
-				data.put(key + commentIndex, comment.get());
+				target.put(key + commentIndex, comment.get());
 			}
 			while (consumeNewLine(document, offset))
 			{
@@ -245,6 +253,8 @@ public class LilacTomlBuilder implements TomlBuilder
 		String key = keys.get().get(keys.get().size() - 1);
 		List<String> parentKeys = keys.get().subList(0, keys.get().size() - 1);
 		TomlTable table = new TomlTable(key, parentKeys);
+
+		this.commenttedTable = table.get();
 
 		Optional<TomlComment> comment = comment(document, offset);
 		if (comment.isPresent())
@@ -400,6 +410,8 @@ public class LilacTomlBuilder implements TomlBuilder
 			targetTable = ((TomlTable) targetTable.get(keyParent)).get();
 		}
 
+		this.commenttedTable = targetTable;
+
 		String tableKey = key.get().get(key.get().size() - 1);
 
 		consumeWhitespace(document, offset);
@@ -518,6 +530,8 @@ public class LilacTomlBuilder implements TomlBuilder
 			return Optional.of(string.get());
 		}
 
+		// We can't distinctively tell the difference between a float and a double in this context, so we default to float
+		
 		Optional<TomlFloat> floatValue = floatValue(document, offset);
 		if (floatValue.isPresent())
 		{
@@ -530,8 +544,6 @@ public class LilacTomlBuilder implements TomlBuilder
 			return integer;
 		}
 
-		// We can't distinctively tell the difference between a float and a double in this context, so we default to float
-		
 		Optional<TomlBoolean> booleanValue = booleanValue(document, offset);
 		if (booleanValue.isPresent())
 		{
@@ -606,7 +618,6 @@ public class LilacTomlBuilder implements TomlBuilder
 		String document, 
 		int[] offset
 	) {
-		// TODO Determine whether or not to follow spec and trim following whitespace
 		return regex(document, "\"\"\"((?:.|\n)*?)\"\"\"", offset, 1);
 	}
 
@@ -1222,17 +1233,17 @@ public class LilacTomlBuilder implements TomlBuilder
 			{
 				case ARRAY -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case BOOLEAN -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
-				case BYTE -> builder.append(parentKeyBuilder + key + ": byte = " + value.serialize());
+				case BYTE -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": byte" : "") + " = " + value.serialize());
 				case COMMENT -> builder.append(value.serialize());
-				case DOUBLE -> builder.append(parentKeyBuilder + key + ": double = " + value.serialize());
+				case DOUBLE -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": double" : "") + " = " + value.serialize());
 				case FLOAT -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case INTEGER -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case LOCAL_DATE -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
 				case LOCAL_DATE_TIME -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
 				case LOCAL_TIME -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
 				case OFFSET_DATE_TIME -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
-				case LONG -> builder.append(parentKeyBuilder + key + ": long = " + value.serialize());
-				case SHORT -> builder.append(parentKeyBuilder + key + ": short = " + value.serialize());
+				case LONG -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": long" : "") + " = " + value.serialize());
+				case SHORT -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": short" : "") + " = " + value.serialize());
 				case STRING -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case TABLE -> {
 					if (((TomlTable) value).isDiscrete())
@@ -1257,7 +1268,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 			if (value instanceof Commentable commentValue)
 			{
-				if (commentValue.getComment() != null)
+				if (commentValue.getComment() != null && this.preservesComments)
 				{
 					builder.append(" #" + commentValue.getComment());
 				}
