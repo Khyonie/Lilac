@@ -56,7 +56,7 @@ public class TomlShort implements Commentable, TomlObject<Short>
 		{
 			case BINARY -> "0b" + Integer.toBinaryString(this.value).substring(16);
 			case OCTAL -> "0o" + Integer.toOctalString(this.value);
-			case DECIMAL -> value + ":s";
+			case DECIMAL -> value + "";
 			case HEXADECIMAL -> "0x" + Integer.toHexString(this.value).substring(4);
 		};
 	}

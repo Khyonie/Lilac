@@ -108,4 +108,15 @@ public interface TomlBuilder
 	public String toToml(
 		Map<String, Object> data
 	);
+
+	/**
+	 * Serializes an Object into a Map that TOML can serialize.
+	 *
+	 * @param object Object to be serialized
+	 *
+	 * @return Map representation of object
+	 */
+	public Map<String, TomlObject<?>> serializeObject(
+		Object object
+	);
 }
