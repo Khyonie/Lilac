@@ -68,6 +68,5 @@ Lilac is written to be very high-performance, compiled regexes are cached whenev
 No single instance of a `TomlBuilder` is expected to be thread-safe. For multithreaded scenarios, you should create a `TomlBuilder` for each thread you need one in, or not run the same builder in parallel.
 
 ## TODO
-- Inline tables
 - Date/time types
 - Arbitrary object serialization
