@@ -1,10 +1,10 @@
 # Lilac 🌸
-Lilac is a high-performance Java 17 TOML language library with support for serialization and deserialization.
+Lilac is a high-performance Java 17 TOML language library with support for serialization and deserialization, similarly to YAML and JSON.
 
 Javadoc can be found [here](http://www.khyonieheart.coffee/javadoc/lilac/index.html).
 
 ## Compliance
-Lilac is fully compliant with the [v1.0.0 TOML language specification](https://toml.io/en/v1.0.0), with the only absence being inline tables and date/time types, which will be implemented at a later date.
+Lilac is fully compliant with the [v1.0.0 TOML language specification](https://toml.io/en/v1.0.0), with the only absence being date/time types, which will be implemented at a later date.
 ## Why would I want to use Lilac?
 Lilac is written specifically to address some common shortcomings of other popular configuration languages and Java libraries:
 ### Inline types
@@ -29,7 +29,8 @@ assert tomlData.get("a_long").get().getClass().equals(Long.TYPE); // Perfection.
 The allowed types are `byte`, `short`, `integer` (which is the default, and not included in serialization), `long`, `float` (default) and `double`. This feature is not turned on by default, as to remain 100% compliant with the TOML spec.
 
 ### Respects your comments and newlines
-Several popular configuration libraries do not store comment and newline information. Lilac, by contrast, preserves positional comments and all empty lines. This feature is not turned on by default.
+Several popular configuration libraries do not store comment and newline information. Lilac, by contrast, preserves positional comments and all empty lines. 
+Even as you add keys and tables, your comments and whitespace will remain relationally consistent to the object above them (this does mean leading whitespace at the top of a document will be trimmed!). This feature is not turned on by default.
 ## Usage
 Start by creating a TOML Builder:
 ```java
