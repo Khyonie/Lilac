@@ -14,7 +14,7 @@ public class Lilac
 
 	private static final int MAJOR_VERSION = 1;
 	private static final int MINOR_VERSION = 2;
-	private static final int BUGFIX_REVISION = 1;
+	private static final int BUGFIX_REVISION = 2;
 
 	public static int getMajorVersion()
 	{

@@ -1,6 +1,8 @@
 package coffee.khyonieheart.lilac;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -451,6 +453,51 @@ public class TomlConfiguration
 		String... keys
 	) {
 		return get(Map.class, keys);
+	}
+
+	public boolean hasKey(
+		String key
+	) {
+		return hasKeys(extractKeys(key));
+	}
+
+	public boolean hasKeys(
+		String... keys
+	) {
+		Objects.requireNonNull(keys);
+
+		if (keys.length == 0)
+		{
+			throw new IllegalStateException("At least one key must be given");
+		}
+
+		Map<String, TomlObject<?>> targetTable = this.configuration;
+		String key;
+		Iterator<String> keyIter = Arrays.asList(keys).iterator();
+		while (keyIter.hasNext())
+		{
+			key = keyIter.next();
+
+			if (!targetTable.containsKey(key))
+			{
+				return false;
+			}
+
+			switch (targetTable.get(key).getType())
+			{
+				case TABLE -> {
+					targetTable = ((TomlTable) targetTable.get(key)).get();
+					continue;
+				}
+				case INLINE_TABLE -> {
+					targetTable = ((TomlTable) targetTable.get(key)).get();
+					continue;
+				}
+				default -> { return !keyIter.hasNext(); }
+			}
+		}
+
+		return true;
 	}
 
 	// Utility
