@@ -14,7 +14,7 @@ public class Lilac
 
 	private static final int MAJOR_VERSION = 1;
 	private static final int MINOR_VERSION = 2;
-	private static final int BUGFIX_REVISION = 2;
+	private static final int PATCH_REVISION = 2;
 
 	public static int getMajorVersion()
 	{
@@ -28,12 +28,12 @@ public class Lilac
 
 	public static int getRevision()
 	{
-		return BUGFIX_REVISION;
+		return PATCH_REVISION;
 	}
 
 	public static String getVersion()
 	{
-		return MAJOR_VERSION + "." + MINOR_VERSION + "." + BUGFIX_REVISION;
+		return MAJOR_VERSION + "." + MINOR_VERSION + "." + PATCH_REVISION;
 	}
 
 	/**
