@@ -4,6 +4,7 @@ name = "Lilac"
 [task]
 source = [ "src/" ]
 output = [ "target/{TASK_NAME}/Lilac.jar" ]
+include = [ "COPYING", "COPYING.LESSER" ]
 
 [task_main]
 

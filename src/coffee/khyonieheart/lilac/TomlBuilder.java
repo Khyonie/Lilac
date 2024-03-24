@@ -2,6 +2,13 @@ package coffee.khyonieheart.lilac;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 
@@ -146,6 +153,95 @@ public interface TomlBuilder
 	public Map<String, TomlObject<?>> serializeObject(
 		Object object
 	);
+
+	// Writers
+	//-------------------------------------------------------------------------------- 
+
+	/**
+	 * Writes the given TOML configuration to the given file. The file will be overwritten.
+	 *
+	 * @param target Filepath to target file
+	 * @param configuration Configuration to write
+	 *
+	 * @return True if and only if the configuration was successfully saved.
+	 */
+	public default boolean writeToFile(
+		String target,
+		TomlConfiguration configuration
+	) {
+		Objects.requireNonNull(target);
+		Objects.requireNonNull(configuration);
+
+		return this.writeToFile(new File(target), configuration.getBacking());
+	}
+
+	/**
+	 * Writes the given TOML configuration map to the given file. The file will be overwritten.
+	 *
+	 * @param target Filepath to target file
+	 * @param configuration Configuration map to write
+	 *
+	 * @return True if and only if the configuration was successfully saved.
+	 */
+	public default boolean writeToFile(
+		String target,
+		Map<String, TomlObject<?>> configuration
+	) {
+		Objects.requireNonNull(target);
+		Objects.requireNonNull(configuration);
+
+		return this.writeToFile(new File(target), configuration);
+	}
+
+	/**
+	 * Writes the given TOML configuration map to the given file. The file will be overwritten.
+	 *
+	 * @param target Target file
+	 * @param configuration Configuration map to write
+	 *
+	 * @return True if and only if the configuration was successfully saved.
+	 */
+	public default boolean writeToFile(
+		File target,
+		TomlConfiguration configuration
+	) {
+		Objects.requireNonNull(configuration);
+
+		return this.writeToFile(target, configuration.getBacking());
+	}
+
+	/**
+	 * Writes the given TOML configuration map to the given file. The file will be overwritten.
+	 *
+	 * @param target Target file
+	 * @param configuration Configuration map to write
+	 *
+	 * @return True if and only if the configuration was successfully saved.
+	 */
+	public default boolean writeToFile(
+		File target,
+		Map<String, TomlObject<?>> configuration
+	) {
+		Objects.requireNonNull(target);
+		Objects.requireNonNull(configuration);
+
+		Path path; 
+		try {
+			path = Paths.get(new URI(target.getAbsolutePath()).toURL().toURI());
+		} catch (URISyntaxException | MalformedURLException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		try {
+			Files.write(path, this.toTomlFromTable(configuration).getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		return true;
+	}
 
 	/**
 	 * Sets whether or not this TOML builder will retain comments.

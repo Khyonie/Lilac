@@ -1,5 +1,6 @@
 /**
  * Root package for Lilac.
+ *
  * <br>
  * <b>Lilac ~ A high performance TOML language library.</b></p>
  * <i>Copyright (C) 2024  Hailey-Jane "Khyonie" Garrett</i><p>

@@ -7,8 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import coffee.khyonieheart.lilac.value.TomlInlineTable;
 import coffee.khyonieheart.lilac.value.TomlObject;
@@ -17,13 +15,16 @@ import coffee.khyonieheart.lilac.value.TomlTable;
 public class TomlConfiguration
 {
 	private Map<String, TomlObject<?>> configuration;
-	private static Pattern normalKey = Pattern.compile("([A-Za-z0-9_-]+)");
-	private static Pattern quotedKey = Pattern.compile("([\"'])((?:\\\\1|.)*?)(\\1)");
 
 	public TomlConfiguration(
 		Map<String, TomlObject<?>> configuration
 	) {
 		this.configuration = Objects.requireNonNull(configuration);
+	}
+
+	public Map<String, TomlObject<?>> getBacking()
+	{
+		return this.configuration;
 	}
 
 	public TomlObject<?> getTomlObject(
@@ -89,7 +90,7 @@ public class TomlConfiguration
 			throw new IllegalArgumentException("Key must be at least 1 character");
 		}
 
-		String[] keys = extractKeys(key);
+		String[] keys = TomlKeys.extractKeys(key);
 
 		TomlObject<?> obj = getTomlObject(keys);
 		if (obj == null)
@@ -458,7 +459,7 @@ public class TomlConfiguration
 	public boolean hasKey(
 		String key
 	) {
-		return hasKeys(extractKeys(key));
+		return hasKeys(TomlKeys.extractKeys(key));
 	}
 
 	public boolean hasKeys(
@@ -502,107 +503,52 @@ public class TomlConfiguration
 
 	// Utility
 	//-------------------------------------------------------------------------------- 
-	private String[] extractKeys(
-		String key
+
+	public void set(
+		String key,
+		TomlObject<?> object
 	) {
-		ArrayList<String> extractedKeys = new ArrayList<>();
+		this.set(object, TomlKeys.extractKeys(key));
+	}
 
-		int offset = 0;
-		Matcher normalKeyMatcher = normalKey.matcher(key);
-		Matcher quotedKeyMatcher = quotedKey.matcher(key);
+	public void set(
+		TomlObject<?> object,
+		String... keys
+	) {
+		Objects.requireNonNull(object);
+		Objects.requireNonNull(keys);
 
-		boolean foundTopLevelKey = false;
-		if (normalKeyMatcher.find(offset))
+		if (keys.length == 0)
 		{
-			if (normalKeyMatcher.start() == offset)
-			{
-				extractedKeys.add(normalKeyMatcher.group(0));
-				foundTopLevelKey = true;
-				offset += normalKeyMatcher.group().length();
-			}
+			throw new IllegalArgumentException("At least one key must be given");
 		}
 
-		if (!foundTopLevelKey)
+		Map<String, TomlObject<?>> targetTable = this.configuration;
+		List<String> parents = new ArrayList<>();
+
+
+		for (int i = 0; i < keys.length; i++)
 		{
-			if (quotedKeyMatcher.find(offset))
+			String key = keys[i];
+			
+			if (i + 1 < keys.length)
 			{
-				if (quotedKeyMatcher.start() == offset)
+				parents.add(key);
+				if (!targetTable.containsKey(key))
 				{
-					extractedKeys.add(quotedKeyMatcher.group(2));
-					foundTopLevelKey = true;
-					offset += quotedKeyMatcher.group().length();
+					targetTable.put(key, new TomlTable(new ArrayList<>(parents)));
 				}
-			}
-		}
 
-		if (!foundTopLevelKey)
-		{
-			throw new IllegalArgumentException("Could not extract top-level key from input \"" + key + "\". To use an empty top level key, use the literal \\\"\\\" (two escaped quotes).");
-		}
-
-		while (offset < key.length())
-		{
-			if (!Character.isWhitespace(key.charAt(offset)))
-			{
-				break;
-			}
-
-			offset++;
-		}
-
-		while (offset < key.length())
-		{
-			if (Character.isWhitespace(key.charAt(offset)))
-			{
-				offset++;
+				targetTable = switch (targetTable.get(key).getType())
+				{
+					case TABLE -> ((TomlTable) targetTable.get(key)).get();
+					case INLINE_TABLE -> ((TomlInlineTable) targetTable.get(key)).get();
+					default -> throw new IllegalStateException("Unexpected type " + targetTable.get(key).getType().name() + " for key " + key + ", expected a TABLE or INLINE_TABLE");
+				};
 				continue;
 			}
 
-			// Consume dot
-			if (key.charAt(offset) != '.')
-			{
-				throw new IllegalArgumentException("Expected a \".\" to pair keys together at position " + offset);
-			}
-
-			offset++;
-			// Consume whitespace
-			while (offset < key.length())
-			{
-				if (!Character.isWhitespace(key.charAt(offset)))
-				{
-					break;
-				}
-
-				offset++;
-			}
-
-			// Consume key
-			if (normalKeyMatcher.find(offset))
-			{
-				if (normalKeyMatcher.start() == offset)
-				{
-					extractedKeys.add(normalKeyMatcher.group(0));
-					offset += normalKeyMatcher.group().length();
-
-					continue;
-				}
-			}
-
-			if (quotedKeyMatcher.find(offset))
-			{
-				if (quotedKeyMatcher.start() == offset)
-				{
-					extractedKeys.add(quotedKeyMatcher.group(2));
-					offset += quotedKeyMatcher.group().length();
-
-					continue;
-				}
-			}
-
-			throw new IllegalArgumentException("Could not find a key after dot at position " + offset + ". To represent an empty key, use a \\\"\\\" literal.");
+			targetTable.put(key, object);
 		}
-
-		String[] keys = new String[extractedKeys.size()];
-		return extractedKeys.toArray(keys);
 	}
 }
