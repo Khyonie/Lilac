@@ -45,4 +45,14 @@ public class Lilac
 	{
 		return new LilacTomlBuilder();
 	}
+
+	/**
+	 * Creates a new configuration builder.
+	 *
+	 * @return A new TOML configuration builder, to create a configuration
+	 */
+	public static TomlConfigurationBuilder newConfiguration()
+	{
+		return new TomlConfigurationBuilder();
+	}
 }

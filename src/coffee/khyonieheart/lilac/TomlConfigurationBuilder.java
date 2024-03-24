@@ -27,7 +27,7 @@ public class TomlConfigurationBuilder
 	private TomlObject<?> formattingTarget = null;
 	private TomlConfiguration configuration;
 
-	private TomlConfigurationBuilder()
+	TomlConfigurationBuilder()
 	{
 		this.configuration = new TomlConfiguration(new LinkedHashMap<>());
 	}
