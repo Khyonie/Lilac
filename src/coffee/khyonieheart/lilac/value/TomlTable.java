@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import coffee.khyonieheart.lilac.api.Commentable;
 
@@ -38,6 +39,16 @@ public class TomlTable implements Commentable, TomlObject<Map<String, TomlObject
 		List<String> parents
 	) {
 		this.parentTables = new ArrayList<>(parents);
+	}
+
+	public TomlTable rebase(
+		Map<String, TomlObject<?>> data
+	) {
+		Objects.requireNonNull(data);
+
+		this.data = data;
+
+		return this;
 	}
 
 	@Override

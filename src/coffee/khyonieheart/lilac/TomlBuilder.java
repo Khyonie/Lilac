@@ -117,8 +117,7 @@ public interface TomlBuilder
 	public default TomlConfiguration parseStringIntoConfiguration(
 		String configuration
 	)
-		throws FileNotFoundException,
-			TomlSyntaxException
+		throws TomlSyntaxException
 	{
 		return new TomlConfiguration(parseString(configuration));
 	}

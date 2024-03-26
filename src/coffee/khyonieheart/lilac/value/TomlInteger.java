@@ -1,5 +1,8 @@
 package coffee.khyonieheart.lilac.value;
 
+import java.util.Objects;
+
+import coffee.khyonieheart.lilac.TomlBuilder;
 import coffee.khyonieheart.lilac.api.Commentable;
 import coffee.khyonieheart.lilac.api.NumberBase;
 
@@ -47,6 +50,20 @@ public class TomlInteger implements Commentable, TomlObject<Integer>
 		this.base = base;
 
 		return this;
+	}
+
+	public String serialize(
+		TomlBuilder builder
+	) {
+		Objects.requireNonNull(builder);
+
+		return switch (this.base)
+		{
+			case BINARY -> "0b" + Integer.toBinaryString(this.value);
+			case OCTAL -> "0o" + Integer.toOctalString(this.value);
+			case DECIMAL -> value + "";
+			case HEXADECIMAL -> "0x" + (builder.getUppercaseHexadecimal() ? Integer.toHexString(this.value).toUpperCase() : Integer.toHexString(this.value));
+		};
 	}
 
 	@Override

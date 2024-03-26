@@ -29,6 +29,21 @@ public class TomlFloat implements Commentable, TomlObject<Float>
 	@Override
 	public String serialize() 
 	{
+		if (this.value == Float.POSITIVE_INFINITY)
+		{
+			return "inf";
+		}
+
+		if (this.value == Float.NEGATIVE_INFINITY)
+		{
+			return "-inf";
+		}
+
+		if (this.value == Float.NaN)
+		{
+			return "nan";
+		}
+
 		return Float.toString(this.value);
 	}
 

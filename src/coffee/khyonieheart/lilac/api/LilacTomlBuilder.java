@@ -127,7 +127,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 		if (offset[0] < (document.length() - 1))
 		{
-			throw new TomlSyntaxException("Failed to parse entire document, reached position " + offset[0] + " while the document length is " + document.length());
+			throw new TomlSyntaxException("Failed to parse entire document, reached position " + offset[0] + " while the document length is " + document.length(), offset[0], document);
 		}
 	}
 
@@ -201,10 +201,10 @@ public class LilacTomlBuilder implements TomlBuilder
 			{
 				if (targetData.get(t.getKey()).getType() == TomlObjectType.TABLE)
 				{
-					throw new TomlSyntaxException("Duplicate table \"" + t.getKey() + "\"");
+					throw new TomlSyntaxException("Duplicate table \"" + t.getKey() + "\"", offset[0], document);
 				}
 
-				throw new TomlSyntaxException("Cannot redefine key \"" + t.getKey() + "\" as a table. Must provide a unique table name instead");
+				throw new TomlSyntaxException("Cannot redefine key \"" + t.getKey() + "\" as a table. Must provide a unique table name instead", offset[0], document);
 			}
 
 			targetData.put(t.getKey(), t);
@@ -244,12 +244,12 @@ public class LilacTomlBuilder implements TomlBuilder
 		Optional<List<String>> keys = key(document, offset, parents);
 		if (keys.isEmpty())
 		{
-			throw new TomlSyntaxException("Expected a Key after table start at position " + offset[0]);
+			throw new TomlSyntaxException("Expected a Key after table start at position " + offset[0], offset[0], document);
 		}
 
 		if (!literal(document, "]", offset))
 		{
-			throw new TomlSyntaxException("Expected a table end (\"]\") at position " + offset[0]);
+			throw new TomlSyntaxException("Expected a table end (\"]\") at position " + offset[0], offset[0], document);
 		}
 
 		String key = keys.get().get(keys.get().size() - 1);
@@ -303,10 +303,11 @@ public class LilacTomlBuilder implements TomlBuilder
 
 			if (identity.isEmpty())
 			{
-				throw new TomlSyntaxException("Expected a KeyIdentity after dot at position " + offset[0]);
+				throw new TomlSyntaxException("Expected a KeyIdentity after dot at position " + offset[0], offset[0], document);
 			}
 
 			subkeys.add(identity.get());
+			consumeWhitespace(document, offset);
 		}
 
 		return Optional.of(subkeys);
@@ -315,7 +316,8 @@ public class LilacTomlBuilder implements TomlBuilder
 	/**
 	 * KeyIdentity:
 	 * > NormalKey
-	 * > QuotedKey
+	 * > QuotedKey 
+	 * > LiteralKey
 	 */
 	private Optional<String> keyIdentity(
 		String document, 
@@ -330,7 +332,13 @@ public class LilacTomlBuilder implements TomlBuilder
 		}
 
 		//System.out.println("[ KeyIdentity ] Searching for a quoted key at position " + offset[0]);
-		return quotedKey(document, offset);
+		key = quotedKey(document, offset);
+		if (key.isPresent())
+		{
+			return key;
+		}
+
+		return literalKey(document, offset);
 	}
 
 	/**
@@ -352,7 +360,17 @@ public class LilacTomlBuilder implements TomlBuilder
 		String document, 
 		int[] offset
 	) {
-		return regex(document, "([\"'])((?:\\\\1|.)*?)(\\1)", offset, 2);
+		//return regex(document, "(\")((?:\\\"|.)*?)(\")", offset, 2);
+		return regex(document, "(\")((?:\\\"|.)*?)(\")", offset, 2);
+	}
+
+	/* LiteralKey: 
+	 */
+	private Optional<String> literalKey(
+		String document, 
+		int[] offset
+	) {
+		return regex(document, "'(((?:\\'|.)*?))'", offset, 1);
 	}
 
 	/**
@@ -395,21 +413,34 @@ public class LilacTomlBuilder implements TomlBuilder
 			targetTable = ((TomlTable) targetTable.get(parent)).get();
 		}
 
-		for (String keyParent : key.get().subList(0, key.get().size() - 1))
+		String tableKey;
+
+		if (key.get().size() > 1)
 		{
-			//System.out.println(">>> Adding parent key copy " + keyParent);
-			if (!targetTable.containsKey(keyParent))
+			for (String keyParent : key.get().subList(0, key.get().size() - 1))
 			{
-				targetTable.put(keyParent, new TomlTable(new ArrayList<>(subparents)));
+				//System.out.println(">>> Adding parent key copy " + keyParent);
+				if (!targetTable.containsKey(keyParent))
+				{
+					targetTable.put(keyParent, new TomlTable(new ArrayList<>(subparents)));
+				}
+
+				if (targetTable.get(keyParent).getType() != TomlObjectType.TABLE)
+				{
+					throw new TomlSyntaxException("Expected key \"" + keyParent + "\" to map to a table, instead it mapped to " + targetTable.get(keyParent).getType().name(), offset[0], document);
+				}
+
+				subparents.add(keyParent);
+				targetTable = ((TomlTable) targetTable.get(keyParent)).get();
 			}
 
-			subparents.add(keyParent);
-			targetTable = ((TomlTable) targetTable.get(keyParent)).get();
+			this.commenttedTable = targetTable;
+
+			tableKey = key.get().get(key.get().size() - 1);
+		} else {
+			this.commenttedTable = targetTable;
+			tableKey = key.get().get(0);
 		}
-
-		this.commenttedTable = targetTable;
-
-		String tableKey = key.get().get(key.get().size() - 1);
 
 		consumeWhitespace(document, offset);
 
@@ -421,7 +452,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 			if (typeOption.isEmpty())
 			{
-				throw new TomlSyntaxException("Expected a Java type at position " + offset[0]);
+				throw new TomlSyntaxException("Expected a Java type at position " + offset[0], offset[0], document);
 			}
 
 			type = typeOption.get();
@@ -430,14 +461,14 @@ public class LilacTomlBuilder implements TomlBuilder
 		consumeWhitespace(document, offset);
 		if (!literal(document, "=", offset))
 		{
-			throw new TomlSyntaxException("Expected an \"=\" to pair the key \"" + key.get() + "\" and the following value together at position" + offset[0]);
+			throw new TomlSyntaxException("Expected an \"=\" to pair the key \"" + key.get() + "\" and the following value together at position " + offset[0], offset[0], document);
 		}
 
 		consumeWhitespace(document, offset);
 		Optional<TomlObject<?>> valueOption = value(document, offset, type);
 		if (valueOption.isEmpty())
 		{
-			throw new TomlSyntaxException("Expected a value after \"=\" in key \"" + key.get() + "\" at position " + offset[0]);
+			throw new TomlSyntaxException("Expected a value after \"=\" in key \"" + key.get() + "\" at position " + offset[0], offset[0], document);
 		}
 
 		TomlObject<?> value = valueOption.get();
@@ -515,7 +546,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 			if (obj.isEmpty())
 			{
-				throw new TomlSyntaxException("Could not parse value with inline type \"" + type + "\" at position " + offset[0]);
+				throw new TomlSyntaxException("Could not parse value with inline type \"" + type + "\" at position " + offset[0], offset[0], document);
 			}
 
 			return Optional.of(obj.get());
@@ -547,13 +578,13 @@ public class LilacTomlBuilder implements TomlBuilder
 			return Optional.of(booleanValue.get());
 		}
 
-		System.out.println("Checking for table");
+		//System.out.println("Checking for table");
 		Optional<TomlInlineTable> table = inlineTable(document, offset);
 		if (table.isPresent())
 		{
 			return Optional.of(table.get());
 		}
-		System.out.println("Table not found");
+		//System.out.println("Table not found");
 
 		Optional<TomlArray> array = array(document, offset);
 		if (array.isPresent())
@@ -701,6 +732,8 @@ public class LilacTomlBuilder implements TomlBuilder
 			return Optional.empty();
 		}
 
+		integer = Optional.of(integer.get().replace("_", ""));
+
 		return switch (type)
 		{
 			case BYTE -> Optional.of(new TomlByte(Byte.parseByte(integer.get())));
@@ -726,6 +759,8 @@ public class LilacTomlBuilder implements TomlBuilder
 		{
 			return Optional.empty();
 		}
+
+		integer = Optional.of(integer.get().replace("_", ""));
 
 		NumberBase base = NumberBase.HEXADECIMAL;
 
@@ -755,6 +790,8 @@ public class LilacTomlBuilder implements TomlBuilder
 			return Optional.empty();
 		}
 
+		integer = Optional.of(integer.get().replace("_", ""));
+
 		NumberBase base = NumberBase.OCTAL;
 
 		return switch (type)
@@ -783,6 +820,8 @@ public class LilacTomlBuilder implements TomlBuilder
 			return Optional.empty();
 		}
 
+		integer = Optional.of(integer.get().replace("_", ""));
+
 		NumberBase base = NumberBase.BINARY;
 
 		return switch (type)
@@ -799,6 +838,7 @@ public class LilacTomlBuilder implements TomlBuilder
 	 * Float:
 	 * > FractionalFloat
 	 * > ExponentialFloat
+	 * > SpecialFloat
 	 */
 	private Optional<TomlFloat> floatValue(
 		String document, 
@@ -816,18 +856,24 @@ public class LilacTomlBuilder implements TomlBuilder
 			return floatOption;
 		}
 
+		floatOption = specialFloat(document, offset);
+		if (floatOption.isPresent())
+		{
+			return floatOption;
+		}
+
 		return Optional.empty();
 	}
 
 	/**
 	 * FractionalFloat:
-	 * > Regex[ ([+-]?\d+\.\d+)([eE][+-]\d+)? ]
+	 * > Regex[ ([+-]?\d+\.\d+(?:[eE][+-]?\d+)?) ]
 	 */
 	private Optional<TomlFloat> fractionalFloat(
 		String document, 
 		int[] offset
 	) {
-		Optional<String> floatString = regex(document, "([+-]?\\d+\\.\\d+)([eE][+-]\\d+)?", offset);
+		Optional<String> floatString = regex(document, "([+-]?\\d+\\.\\d+(?:[eE][+-]?\\d+)?)", offset);
 
 		if (floatString.isEmpty())
 		{
@@ -839,13 +885,13 @@ public class LilacTomlBuilder implements TomlBuilder
 
 	/**
 	 * ExponentialFloat:
-	 * > Regex[ ([+-]?\d+)([eE][+-]\d+) ]
+	 * > Regex[ ([+-]?\d+[eE][+-]?\d+) ]
 	 */
 	private Optional<TomlFloat> exponentialFloat(
 		String document,
 		int[] offset
 	) {
-		Optional<String> floatString = regex(document, "([+-]?\\d+[eE][+-]\\d+)", offset);
+		Optional<String> floatString = regex(document, "([+-]?\\d+[eE][+-]?\\d+)", offset);
 
 		if (floatString.isEmpty())
 		{
@@ -853,6 +899,43 @@ public class LilacTomlBuilder implements TomlBuilder
 		}
 
 		return Optional.of(new TomlFloat(Float.parseFloat(floatString.get())));
+	}
+
+	/**
+	 * SpecialFloat:
+	 * > inf
+	 * > +inf
+	 * > -inf
+	 * > nan
+	 * > +nan
+	 * > -nan
+	 */
+	private Optional<TomlFloat> specialFloat(
+		String document,
+		int[] offset
+	) {
+		if (literal(document, "inf", offset) || literal(document, "+inf", offset))
+		{
+			return Optional.of(new TomlFloat(Float.POSITIVE_INFINITY));
+		}
+
+		if (literal(document, "-inf", offset))
+		{
+			return Optional.of(new TomlFloat(Float.NEGATIVE_INFINITY));
+		}
+
+		if (literal(document, "nan", offset) || literal(document, "+nan", offset))
+		{
+			return Optional.of(new TomlFloat(Float.NaN));
+		}
+
+		if (literal(document, "-nan", offset))
+		{
+			System.out.println("Warning: Java does not support the \"-nan\" float literal. Lilac must support it for TOML compliance, however, it has been converted into Float.NaN for compatibility.");
+			return Optional.of(new TomlFloat(Float.NaN));
+		}
+
+		return Optional.empty();
 	}
 
 	/**
@@ -968,7 +1051,7 @@ public class LilacTomlBuilder implements TomlBuilder
 				obj = value(document, offset, null);
 				if (obj.isEmpty())
 				{
-					throw new TomlSyntaxException("Expected a value at position " + offset[0]);
+					throw new TomlSyntaxException("Expected a value at position " + offset[0], offset[0], document);
 				}
 
 				array.add(obj.get());
@@ -1001,7 +1084,7 @@ public class LilacTomlBuilder implements TomlBuilder
 		{
 			if (!literal(document, "}", offset))
 			{
-				throw new TomlSyntaxException("Expected a \"}\" to end inline table at position " + offset[0]);
+				throw new TomlSyntaxException("Expected a \"}\" to end inline table at position " + offset[0], offset[0], document);
 			}
 
 			return Optional.of(new TomlInlineTable(new LinkedHashMap<>()));
@@ -1017,7 +1100,7 @@ public class LilacTomlBuilder implements TomlBuilder
 			Optional<String> typeOption = javaType(document, offset);
 			if (typeOption.isEmpty())
 			{
-				throw new TomlSyntaxException("Expected JavaType at position " + offset[0]);
+				throw new TomlSyntaxException("Expected JavaType at position " + offset[0], offset[0], document);
 			}
 
 			consumeWhitespace(document, offset);
@@ -1026,14 +1109,15 @@ public class LilacTomlBuilder implements TomlBuilder
 
 		if (!literal(document, "=", offset))
 		{
-			throw new TomlSyntaxException("Expected a \"=\" to pair inline table KeyValuePair together at position " + offset[0]);
+			throw new TomlSyntaxException("Expected a \"=\" to pair inline table KeyValuePair together at position " + offset[0], offset[0], document);
 		}
 
+		consumeWhitespace(document, offset);
 		Optional<TomlObject<?>> valueOption = value(document, offset, type);
 
 		if (valueOption.isEmpty())
 		{
-			throw new TomlSyntaxException("Expected a Value at position " + offset[0]);
+			throw new TomlSyntaxException("Expected a Value at position " + offset[0], offset[0], document);
 		}
 
 		consumeWhitespace(document, offset);
@@ -1064,7 +1148,7 @@ public class LilacTomlBuilder implements TomlBuilder
 			{
 				if (!literal(document, "}", offset))
 				{
-					throw new TomlSyntaxException("Expected a \"}\" to end inline table at position " + offset[0]);
+					throw new TomlSyntaxException("Expected a \"}\" to end inline table at position " + offset[0], offset[0], document);
 				}
 
 				targetData.put(targetKey, new TomlInlineTable(new LinkedHashMap<>()));
@@ -1081,16 +1165,16 @@ public class LilacTomlBuilder implements TomlBuilder
 				Optional<String> typeOption = javaType(document, offset);
 				if (typeOption.isEmpty())
 				{
-					throw new TomlSyntaxException("Expected JavaType at position " + offset[0]);
+					throw new TomlSyntaxException("Expected JavaType at position " + offset[0], offset[0], document);
 				}
 
-				consumeWhitespace(document, offset);
 				type = typeOption.get();
 			}
 
+			consumeWhitespace(document, offset);
 			if (!literal(document, "=", offset))
 			{
-				throw new TomlSyntaxException("Expected a \"=\" to pair inline table KeyValuePair together at position " + offset[0]);
+				throw new TomlSyntaxException("Expected a \"=\" to pair inline table KeyValuePair together at position " + offset[0], offset[0], document);
 			}
 
 			consumeWhitespace(document, offset);
@@ -1098,7 +1182,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 			if (valueOption.isEmpty())
 			{
-				throw new TomlSyntaxException("Expected a Value at position " + offset[0]);
+				throw new TomlSyntaxException("Expected a Value at position " + offset[0], offset[0], document);
 			}
 
 			targetData = new LinkedHashMap<>();
@@ -1119,7 +1203,27 @@ public class LilacTomlBuilder implements TomlBuilder
 
 		consumeWhitespace(document, offset);
 
-		return Optional.of(new TomlInlineTable(targetData));
+		if (!literal(document, "}", offset))
+		{
+			throw new TomlSyntaxException("Expected a \"}\" to end inline table at position " + offset[0], offset[0], document);
+		}
+
+		TomlInlineTable table = new TomlInlineTable(targetData);
+
+		consumeWhitespace(document, offset);
+		Optional<TomlComment> comment = comment(document, offset);
+		if (comment.isPresent())
+		{
+			table.setComment(comment.get().get());
+			consumeWhitespace(document, offset);
+		}
+
+		while (consumeNewLine(document, offset))
+		{
+			table.incrementTrailingNewlines();
+		}
+
+		return Optional.of(table);
 	}
 
 	/**
@@ -1183,6 +1287,11 @@ public class LilacTomlBuilder implements TomlBuilder
 		String literal,
 		int[] offset
 	) {
+		if (offset[0] + literal.length() >= document.length())
+		{
+			return false;
+		}
+
 		//System.out.println("[ Literal ] Searching for literal \"" + literal + "\" (Literal at position: \"" + document.substring(offset[0], offset[0] + literal.length()) + "\")");
 		if (document.substring(offset[0], offset[0] + literal.length()).equals(literal))
 		{
@@ -1361,8 +1470,10 @@ public class LilacTomlBuilder implements TomlBuilder
 			key = entry.getKey();
 			value = entry.getValue();
 
-			if (this.quotedKeyCharacters.matcher(key).find())
+			if (key.contains("\\") || key.contains("\""))
 			{
+				key = "'" + key.replace("\\\\", "\\").replace("\\\"", "\"") + "'";
+			} else if (this.quotedKeyCharacters.matcher(key).find()) {
 				key = "\"" + key + "\"";
 			}
 
@@ -1377,17 +1488,17 @@ public class LilacTomlBuilder implements TomlBuilder
 			{
 				case ARRAY -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case BOOLEAN -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
-				case BYTE -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": byte" : "") + " = " + value.serialize());
+				case BYTE -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": byte" : "") + " = " + ((TomlByte) value).serialize(this));
 				case COMMENT -> builder.append(value.serialize());
 				case DOUBLE -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": double" : "") + " = " + value.serialize());
 				case FLOAT -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
-				case INTEGER -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
+				case INTEGER -> builder.append(parentKeyBuilder + key + " = " + ((TomlInteger) value).serialize(this));
 				case LOCAL_DATE -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
 				case LOCAL_DATE_TIME -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
 				case LOCAL_TIME -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
 				case OFFSET_DATE_TIME -> throw new UnsupportedOperationException("java.lang.temporal types are not supported yet");
-				case LONG -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": long" : "") + " = " + value.serialize());
-				case SHORT -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": short" : "") + " = " + value.serialize());
+				case LONG -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": long" : "") + " = " + ((TomlLong) value).serialize(this));
+				case SHORT -> builder.append(parentKeyBuilder + key + (this.storeJavaTypes ? ": short" : "") + " = " + ((TomlShort) value).serialize(this));
 				case STRING -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case INLINE_TABLE -> builder.append(parentKeyBuilder + key + " = " + value.serialize());
 				case TABLE -> {
@@ -1467,7 +1578,7 @@ public class LilacTomlBuilder implements TomlBuilder
 				continue;
 			}
 
-			TomlObject<?> tomlObject = mapToTomlObject(value);
+			TomlObject<?> tomlObject = mapToTomlObject(value, key, parents);
 
 			if (tomlObject == null)
 			{
@@ -1483,7 +1594,9 @@ public class LilacTomlBuilder implements TomlBuilder
 	}
 
 	private TomlObject<?> mapToTomlObject(
-		Object value
+		Object value,
+		String key,
+		Deque<String> parents
 	) {
 		if (value.getClass().equals(Byte.class))
 		{
@@ -1531,7 +1644,7 @@ public class LilacTomlBuilder implements TomlBuilder
 
 			for (Object obj : list)
 			{
-				tomlList.add(mapToTomlObject(obj));
+				tomlList.add(mapToTomlObject(obj, key, parents));
 			}
 
 			return new TomlArray(tomlList);
@@ -1541,12 +1654,30 @@ public class LilacTomlBuilder implements TomlBuilder
 		{
 			Map<String, Object> copyData = new HashMap<>();
 			
-			map.forEach((key, v) -> copyData.put(key.toString(), v));
+			map.forEach((fKey, v) -> copyData.put(fKey.toString(), v));
 
 			Map<String, TomlObject<?>> tomlData = new LinkedHashMap<>();
 			mapToToml(copyData, tomlData, new ArrayDeque<>());
 
-			return new TomlInlineTable(tomlData);
+			boolean inline = true;
+			for (String k : tomlData.keySet())
+			{
+				if (tomlData.get(k).getType() == TomlObjectType.TABLE)
+				{
+					inline = false;
+					break;
+				}
+			}
+
+			if (inline)
+			{
+				return new TomlInlineTable(tomlData);
+			}
+
+			parents.push(key);
+			TomlTable t = new TomlTable(new ArrayList<>(parents)).rebase(tomlData);
+			parents.pop();
+			return t;
 		}
 
 		/**
@@ -1594,8 +1725,8 @@ public class LilacTomlBuilder implements TomlBuilder
 					continue;
 				}
 
-				tomlData.put(f.getName(), mapToTomlObject(f.get(object)));
-				System.out.println("Serialized public/inheritted field " + f.getName() + " with type " + f.getType().getName() + " (Null? " + (tomlData.get(f.getName()) == null) + ")");
+				tomlData.put(f.getName(), mapToTomlObject(f.get(object), f.getName(), new ArrayDeque<>()));
+				//System.out.println("Serialized public/inheritted field " + f.getName() + " with type " + f.getType().getName() + " (Null? " + (tomlData.get(f.getName()) == null) + ")");
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 				return null;
@@ -1622,8 +1753,8 @@ public class LilacTomlBuilder implements TomlBuilder
 					continue;
 				}
 
-				tomlData.put(f.getName(), mapToTomlObject(f.get(object)));
-				System.out.println("Serialized invisible field " + f.getName() + " with type " + f.getType().getName() + " (Null? " + (tomlData.get(f.getName()) == null) + ")");
+				tomlData.put(f.getName(), mapToTomlObject(f.get(object), f.getName(), new ArrayDeque<>()));
+				//System.out.println("Serialized invisible field " + f.getName() + " with type " + f.getType().getName() + " (Null? " + (tomlData.get(f.getName()) == null) + ")");
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
 				return null;
