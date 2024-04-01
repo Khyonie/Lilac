@@ -59,7 +59,12 @@ public class TomlInlineTable implements Commentable, TomlObject<Map<String, Toml
 			}
 			
 			builder.append(key + " = ");
-			builder.append(value.serialize());
+			switch (value.getType())
+			{
+				case TABLE -> serializeSubtable(((TomlTable) value).get(), builder);
+				default -> builder.append(value.serialize());
+			}
+			//builder.append(value.serialize());
 
 			if (keyIter.hasNext())
 			{
@@ -70,6 +75,20 @@ public class TomlInlineTable implements Commentable, TomlObject<Map<String, Toml
 		builder.append(" }");
 
 		return builder.toString();
+	}
+
+	private void serializeSubtable(
+		Map<String, TomlObject<?>> value,
+		StringBuilder builder
+	) {
+		for (String key : value.keySet())
+		{
+			switch (value.get(key).getType())
+			{
+				case TABLE -> serializeSubtable(((TomlTable) value.get(key)).get(), builder);
+				default -> builder.append(value.get(key).serialize());
+			}
+		}
 	}
 
 	@Override

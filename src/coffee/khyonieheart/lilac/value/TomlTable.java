@@ -73,6 +73,14 @@ public class TomlTable implements Commentable, TomlObject<Map<String, TomlObject
 		return this.parentTables;
 	}
 
+	public List<String> getCanonicalPath()
+	{
+		List<String> allParents = new ArrayList<>(this.parentTables);
+		allParents.add(this.discreteIdentifier);
+
+		return allParents;
+	}
+
 	public String getKey()
 	{
 		return this.discreteIdentifier;

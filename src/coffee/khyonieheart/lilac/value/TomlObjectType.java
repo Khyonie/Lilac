@@ -17,5 +17,6 @@ public enum TomlObjectType
 	ARRAY,
 	TABLE,
 	INLINE_TABLE,
+	TABLE_ARRAY,
 	COMMENT
 }

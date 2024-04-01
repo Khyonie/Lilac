@@ -3,10 +3,10 @@ name = "Lilac"
 
 [task]
 source = [ "src/" ]
-output = [ "target/{TASK_NAME}/Lilac.jar" ]
+output = [ "target/{TASK_NAME}/Lilac.jar", "~/Development/Working/toml-test/lib/Lilac.jar" ]
 include = [ "COPYING", "COPYING.LESSER" ]
 
 [task_main]
 
 [task_test]
-entry = "coffee.khyonieheart.lilac.testing.LilacTestApp" 
+entry = "coffee.khyonieheart.lilac.testing.TestingApp" 

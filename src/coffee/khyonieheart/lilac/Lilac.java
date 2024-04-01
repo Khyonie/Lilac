@@ -1,6 +1,6 @@
 package coffee.khyonieheart.lilac;
 
-import coffee.khyonieheart.lilac.api.LilacTomlBuilder;
+import coffee.khyonieheart.lilac.parser.LilacParser;
 
 /**
  * Root class for the Lilac TOML library.
@@ -13,8 +13,8 @@ public class Lilac
 	private Lilac() {}
 
 	private static final int MAJOR_VERSION = 1;
-	private static final int MINOR_VERSION = 2;
-	private static final int PATCH_REVISION = 2;
+	private static final int MINOR_VERSION = 3;
+	private static final int PATCH_REVISION = 0;
 
 	public static int getMajorVersion()
 	{
@@ -36,14 +36,9 @@ public class Lilac
 		return MAJOR_VERSION + "." + MINOR_VERSION + "." + PATCH_REVISION;
 	}
 
-	/**
-	 * Creates a new TOML builder.
-	 *
-	 * @return A new TOML builder to configure
-	 */
-	public static TomlBuilder newBuilder()
+	public static TomlParser newBuilder()
 	{
-		return new LilacTomlBuilder();
+		return new LilacParser();
 	}
 
 	/**

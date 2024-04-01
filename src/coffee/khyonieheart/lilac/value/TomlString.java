@@ -1,13 +1,13 @@
 package coffee.khyonieheart.lilac.value;
 
 import coffee.khyonieheart.lilac.api.Commentable;
-import coffee.khyonieheart.lilac.api.TomlStringType;
+import coffee.khyonieheart.lilac.api.StringType;
 
 public class TomlString implements Commentable, TomlObject<String>, CharSequence
 {
 	private String string = null;
 	private String comment;
-	private TomlStringType type = TomlStringType.BASIC;
+	private StringType type = StringType.BASIC;
 	private int newlines = 0;
 
 	public TomlString(
@@ -19,7 +19,7 @@ public class TomlString implements Commentable, TomlObject<String>, CharSequence
 
 	public TomlString(
 		String string,
-		TomlStringType type
+		StringType type
 	) {
 		this(string);
 		this.type = type;

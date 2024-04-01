@@ -2,42 +2,33 @@ package coffee.khyonieheart.lilac;
 
 public class TomlSyntaxException extends Exception
 {
+	private int line;
 	private int position;
+	private int length;
 	private String document;
 
 	public TomlSyntaxException(
-		String error,
+		String message,
+		int line,
 		int position,
+		int length,
 		String document
 	) {
-		super(error);
+		super(message);
+		this.line = line;
 		this.position = position;
+		this.length = length;
 		this.document = document;
 	}
 
 	@Override
 	public void printStackTrace()
 	{
-		// Figure out the current line
-		System.out.println("TOML error: " + this.getMessage());
-		int lineStart = position;
-		while (lineStart >= 0 && document.charAt(lineStart) != '\n')
-		{
-			lineStart--;
-		}
-		lineStart++;
-		int lineEnd = position;
-		while (lineEnd < (document.length() - 1) && document.charAt(lineEnd) != '\n')
-		{
-			lineEnd++;
-		}
+		String lineString = document.split("\n")[line] + "↩";
 
-		String line = document.subSequence(lineStart, lineEnd).toString();
-		int errorPosition = position - lineStart + 1; // We offset by 1 to account for the pointer not incrementing on a syntax error
-		String errorArrow = " ".repeat(errorPosition) + "^ (Error here at position " + position + ")";
-
-		System.out.println(line);
-		System.out.println(errorArrow);
+		System.out.println("TOML syntax error: " + this.getMessage() + " at line " + (line + 1) + ", position " + (this.position + 1));
+		System.out.println(lineString);
+		System.out.println(" ".repeat(position) + "^".repeat(this.length) + " (Here)");
 
 		super.printStackTrace();
 	}
