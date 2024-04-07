@@ -13,7 +13,7 @@ public class ProductionFloat
 		LilacDecoder parser,
 		String type
 	) {
-		Optional<String> floatOption = parser.parseRegex("([+-]?[\\d_]+\\.[\\d_]+(?:[eE][+-]?[\\d_]+)?)");
+		Optional<String> floatOption = parser.parseRegex("([+-]?\\d+(?:_\\d+)*\\.\\d+(?:_\\d+)*(?:[eE][+-]?\\d+(?:_\\d+)*)?)");
 
 		if (floatOption.isPresent())
 		{
@@ -24,7 +24,7 @@ public class ProductionFloat
 			});
 		}
 
-		floatOption = parser.parseRegex("([+-]?[\\d_]+[eE][+-]?[\\d_]+)");
+		floatOption = parser.parseRegex("([+-]?\\d+(?:_\\d+)*[eE][+-]?\\d+(?:_\\d+)*)");
 		if (floatOption.isPresent())
 		{
 			return Optional.of(switch (type) {

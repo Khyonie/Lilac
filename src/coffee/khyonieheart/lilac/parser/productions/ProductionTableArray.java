@@ -66,8 +66,11 @@ public class ProductionTableArray
 			parser.getCurrentTableArray().startNextTable();
 			return true;
 		}
-
+		
+		parser.clearCurrentTableArray();
+		parser.addKeyValuePair(keysOption.get(), tableArray);
 		parser.setCurrentTableArray(tableArray);
+
 		return true;
 	}
 }

@@ -13,6 +13,7 @@ import coffee.khyonieheart.lilac.value.TomlByte;
 import coffee.khyonieheart.lilac.value.TomlInteger;
 import coffee.khyonieheart.lilac.value.TomlLong;
 import coffee.khyonieheart.lilac.value.TomlObject;
+import coffee.khyonieheart.lilac.value.TomlObjectType;
 import coffee.khyonieheart.lilac.value.TomlShort;
 import coffee.khyonieheart.lilac.value.TomlTable;
 
@@ -98,6 +99,13 @@ public class LilacEncoder implements TomlEncoder
 							builder.append('\n');
 						}
 
+						if (tableValue.getComment() != null)
+						{
+							builder.append(" #" +tableValue.getComment());
+						}
+
+						builder.append('\n');
+
 						encodeTable(tableValue.get(), new ArrayList<>(), builder, parser);
 						continue;
 					}
@@ -120,9 +128,12 @@ public class LilacEncoder implements TomlEncoder
 				}
 			}
 
-			for (int i = 0; i < table.get(key).getNumberOfTrailingNewlines(); i++)
+			if (table.get(key).getType() != TomlObjectType.TABLE_ARRAY)
 			{
-				builder.append('\n');
+				for (int i = 0; i < table.get(key).getNumberOfTrailingNewlines(); i++)
+				{
+					builder.append('\n');
+				}
 			}
 
 			builder.append('\n');

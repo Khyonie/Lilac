@@ -22,6 +22,8 @@ public class ProductionDiscreteTable
 			return Optional.empty();
 		}
 
+		parser.toNextSymbol();
+
 		Optional<List<String>> keys = ProductionKey.parse(parser);
 
 		if (keys.isEmpty())
@@ -46,14 +48,6 @@ public class ProductionDiscreteTable
 		if (comment.isPresent())
 		{
 			table.setComment(comment.get());
-			while (parser.consumeCharacters(' ', '\t'));
-		}
-
-		while (parser.consumeCharacters('\n'))
-		{
-			table.incrementTrailingNewlines();
-			parser.nextLine();
-			while (parser.consumeCharacters(' ', '\t'));
 		}
 
 		parser.clearCurrentTableArray();

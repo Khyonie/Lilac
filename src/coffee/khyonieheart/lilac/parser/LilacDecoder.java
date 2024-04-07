@@ -2,12 +2,14 @@ package coffee.khyonieheart.lilac.parser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,8 +21,8 @@ import coffee.khyonieheart.lilac.parser.productions.ProductionComment;
 import coffee.khyonieheart.lilac.parser.productions.ProductionDiscreteTable;
 import coffee.khyonieheart.lilac.parser.productions.ProductionKeyValuePair;
 import coffee.khyonieheart.lilac.parser.productions.ProductionTableArray;
-import coffee.khyonieheart.lilac.value.TomlInlineTable;
 import coffee.khyonieheart.lilac.value.TomlObject;
+import coffee.khyonieheart.lilac.value.TomlObjectType;
 import coffee.khyonieheart.lilac.value.TomlTable;
 import coffee.khyonieheart.lilac.value.TomlTableArray;
 import coffee.khyonieheart.lilac.value.formatting.TomlComment;
@@ -35,12 +37,13 @@ public class LilacDecoder implements TomlDecoder
 	private Map<String, TomlObject<?>> tomlData;
 
 	private List<ParserStep> steps = new ArrayList<>();
+	private Set<String> createdTableKeys = new HashSet<>();
 
 	private int line = 1;
 	private int linePointer = 0;
 
 	private TomlTableArray currentTableArray = null;
-	private Map<String, TomlObject<?>> currentTable = null;
+	private List<String> currentTableKeys;
 
 	@Override
 	public TomlConfiguration decode(
@@ -49,9 +52,9 @@ public class LilacDecoder implements TomlDecoder
 		throws TomlSyntaxException
 	{
 		this.document = Objects.requireNonNull(document);
-		if (document.isEmpty())
+		if (this.document.isEmpty())
 		{
-			return new TomlConfiguration(new LinkedHashMap<>());
+			throw new IllegalArgumentException("Given TOML document must not be empty");
 		}
 
 		// Reset state
@@ -61,29 +64,52 @@ public class LilacDecoder implements TomlDecoder
 		this.linePointer = 0;
 		this.steps.clear();
 		this.currentTableArray = null;
+		this.createdTableKeys.clear();
+
+		// Check for BOM mark
+		if (this.document.contains("\uFEFF"))
+		{
+			if (this.document.charAt(0) != '\uFEFF')
+			{
+				throw new TomlSyntaxException("Byte-order-mark (BOM) must be at the very start of the given document", line, linePointer, 1, document);
+			}
+
+			incrementPointer(1);
+		}
 
 		this.tomlData = new LinkedHashMap<>();
-		this.currentTable = tomlData;
+		this.currentTableKeys = new ArrayList<>();
+
+		TomlObject<?> mostRecentObject = null;
 
 		while (pointer[0] < this.document.length())
 		{
 			addStep("----- New Construct -----");
 			while (consumeCharacters(' ', '\t'));
+
+			boolean foundNewline = false;
 			while (consumeCharacters('\n'))
 			{
+				foundNewline = true;
 				nextLine();
-				while (consumeCharacters(' ', '\n'));
+
+				if (mostRecentObject != null)
+				{
+					mostRecentObject.incrementTrailingNewlines();
+				}
+
+				while (consumeCharacters(' ', '\t'));
+			}
+
+			if (!foundNewline && mostRecentObject != null)
+			{
+				break;
 			}
 
 			// Array of tables
 			if (ProductionTableArray.parse(this))
 			{
-				while (this.consumeCharacters(' ', '\t'));
-				while (this.consumeCharacters('\n'))
-				{
-					this.nextLine();
-					while (this.consumeCharacters(' ', '\t'));
-				}
+				this.toNextSymbol();
 
 				continue;
 			}
@@ -92,15 +118,34 @@ public class LilacDecoder implements TomlDecoder
 			Optional<TomlTable> tableOption = ProductionDiscreteTable.parse(this);
 			if (tableOption.isPresent())
 			{
-				this.currentTable = null;
+				this.currentTableKeys.clear();
+
+				StringBuilder keyBuilder = new StringBuilder();
+				keyBuilder.append(tableOption.get().getCanonicalPath().get(0));
+				for (int i = 1; i < tableOption.get().getCanonicalPath().size(); i++)
+				{
+					keyBuilder.append('.');
+					keyBuilder.append(tableOption.get().getCanonicalPath().get(i));
+				}
+
+				if (this.createdTableKeys.contains(keyBuilder.toString()))
+				{
+					throw new TomlSyntaxException("Duplicate table entry " + keyBuilder.toString(), this.line, this.linePointer - keyBuilder.toString().length(), line, document);
+				}
+
 				addKeyValuePair(tableOption.get().getCanonicalPath(), tableOption.get());
-				this.currentTable = tableOption.get().get();
+				this.currentTableKeys = tableOption.get().getCanonicalPath();
+				this.createdTableKeys.add(keyBuilder.toString());
+
+				mostRecentObject = tableOption.get();
 				continue;
 			}
 
 			// Key/value pair
-			if (ProductionKeyValuePair.parse(this))
+			Optional<TomlObject<?>> valueOption = ProductionKeyValuePair.parse(this);
+			if (valueOption.isPresent())
 			{
+				mostRecentObject = valueOption.get();
 				continue;
 			}
 
@@ -109,13 +154,6 @@ public class LilacDecoder implements TomlDecoder
 			if (commentOption.isPresent())
 			{
 				TomlComment comment = new TomlComment(commentOption.get());
-
-				while (this.consumeCharacters('\n'))
-				{
-					this.nextLine();
-					comment.incrementTrailingNewlines();
-					while (this.consumeCharacters(' ', '\t'));
-				}
 
 				int presentIndex = 0;
 				if (this.currentTableArray != null)
@@ -129,12 +167,14 @@ public class LilacDecoder implements TomlDecoder
 					continue;
 				}
 
+				Map<String, TomlObject<?>> currentTable = getCurrentMap();
 				while (currentTable.containsKey(TOML_COMMENT_KEY + presentIndex))
 				{
 					presentIndex++;
 				}
 
 				currentTable.put(TOML_COMMENT_KEY + presentIndex, comment);
+				mostRecentObject = comment;
 				continue;
 			}
 
@@ -242,9 +282,10 @@ public class LilacDecoder implements TomlDecoder
 			return;
 		}
 
+		keys.addAll(0, this.currentTableKeys);
 		String key = keys.get(0); // Root key
 		List<String> parents = new ArrayList<>();
-		Map<String, TomlObject<?>> targetMap = (this.currentTable != null ? this.currentTable : this.tomlData);
+		Map<String, TomlObject<?>> targetMap = tomlData;
 
 		Iterator<String> keyIter = keys.iterator();
 		while (keyIter.hasNext())
@@ -284,10 +325,60 @@ public class LilacDecoder implements TomlDecoder
 
 		if (targetMap.containsKey(key))
 		{
+			if (targetMap.get(key).getType() == TomlObjectType.TABLE && value.getType() == TomlObjectType.TABLE)
+			{
+				if (((TomlTable) targetMap.get(key)).isDiscrete() && !((TomlTable) value).isDiscrete())
+				{
+					throw new TomlSyntaxException("Cannot overwrite discrete table \"" + key + "\" with non-discrete table", this.line, this.getLinePointer(), key.length(), this.document);
+				}
+
+				if (!((TomlTable) targetMap.get(key)).isDiscrete() && ((TomlTable) value).isDiscrete())
+				{
+					// Copy data
+					((TomlTable) value).get().putAll(((TomlTable) targetMap.get(key)).get());
+					return;
+				}
+			}
 			throw new TomlSyntaxException("Cannot overwrite existing key " + key + " with type " + targetMap.get(key).getType(), line, this.linePointer, key.length(), document);
 		}
 
 		targetMap.put(key, value);
+		//printMap(tomlData, 0);
+	}
+
+	/*
+	private void printMap(
+		Map<String, TomlObject<?>> data,
+		int depth
+	) {
+		for (String key : data.keySet())
+		{
+			System.out.println("- ".repeat(depth) + key + " (" + data.get(key).getType().name() + ")");
+			switch (data.get(key).getType())
+			{
+				case TABLE -> printMap(((TomlTable) data.get(key)).get(), depth + 1);
+				case INLINE_TABLE -> printMap(((TomlInlineTable) data.get(key)).get(), depth + 1);
+				case TABLE_ARRAY -> { 
+					for (Map<String, TomlObject<?>> t : ((TomlTableArray) data.get(key)).get())
+					{
+						printMap(t, depth + 1);
+					}
+				}
+				default -> {}
+			}
+		}
+	}
+	*/
+
+	private Map<String, TomlObject<?>> getCurrentMap()
+	{
+		Map<String, TomlObject<?>> data = this.tomlData;
+		for (String key : currentTableKeys)
+		{
+			data = ((TomlTable) data.get(key)).get();
+		}
+
+		return data;
 	}
 
 	public String getCurrentDocument()

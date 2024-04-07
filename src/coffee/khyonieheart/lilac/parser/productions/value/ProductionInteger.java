@@ -51,12 +51,20 @@ public class ProductionInteger
 
 		// Decimal
 		stringOption = parser.parseRegex("([+-]?(?:_|\\d)+)");
+		//stringOption = parser.parseRegex("([+-]?[1-9]+(?:_\\d+)*)");
 		if (stringOption.isPresent())
 		{
 			value = stringOption.get().replace("_", "");
 			base = NumberBase.DECIMAL;
 
 			return Optional.of(toValue(value, type, base));
+		}
+
+		// Literally just zero
+		stringOption = parser.parseRegex("([+-]?0)");
+		if (stringOption.isPresent())
+		{
+			return Optional.of(toValue("0", type, NumberBase.DECIMAL));
 		}
 
 		return Optional.empty();

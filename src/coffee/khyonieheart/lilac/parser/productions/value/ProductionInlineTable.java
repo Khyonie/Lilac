@@ -13,6 +13,7 @@ import coffee.khyonieheart.lilac.parser.productions.ProductionKey;
 import coffee.khyonieheart.lilac.parser.productions.ProductionValue;
 import coffee.khyonieheart.lilac.value.TomlInlineTable;
 import coffee.khyonieheart.lilac.value.TomlObject;
+import coffee.khyonieheart.lilac.value.TomlObjectType;
 import coffee.khyonieheart.lilac.value.TomlTable;
 
 public class ProductionInlineTable
@@ -113,6 +114,11 @@ public class ProductionInlineTable
 			if (!targetTable.containsKey(parent))
 			{
 				targetTable.put(parent, new TomlTable(new ArrayList<>(parentList)));
+			}
+
+			if (targetTable.get(parent).getType() != TomlObjectType.TABLE)
+			{
+				throw new TomlSyntaxException("Cannot redefine inline table key " + parent, parser.getLine(), parser.getLinePointer(), parent.length(), parser.getCurrentDocument());
 			}
 
 			parentList.add(parent);

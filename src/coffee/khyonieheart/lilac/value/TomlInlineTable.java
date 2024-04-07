@@ -72,6 +72,7 @@ public class TomlInlineTable implements Commentable, TomlObject<Map<String, Toml
 			}
 		}
 
+
 		builder.append(" }");
 
 		return builder.toString();

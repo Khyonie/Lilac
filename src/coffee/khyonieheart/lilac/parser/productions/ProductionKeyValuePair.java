@@ -14,7 +14,7 @@ public class ProductionKeyValuePair
 	 * KeyValuePair:
 	 * > Key [: JavaType] = Value [# Comment] {Newline}
 	 */
-	public static boolean parse(
+	public static Optional<TomlObject<?>> parse(
 		LilacDecoder parser
 	) throws TomlSyntaxException
 	{
@@ -23,7 +23,7 @@ public class ProductionKeyValuePair
 
 		if (keyOption.isEmpty())
 		{
-			return false;
+			return Optional.empty();
 		}
 
 		keys = keyOption.get();
@@ -74,12 +74,9 @@ public class ProductionKeyValuePair
 			}
 		}
 
-		// Consume newlines
-		parser.toNextSymbol();
-
 		parser.addKeyValuePair(keys, value);
 
 		parser.addStep("Added a new key/value pair: " + keys + " of type " + value.getType().name());
-		return true;
+		return Optional.of(value);
 	}
 }
