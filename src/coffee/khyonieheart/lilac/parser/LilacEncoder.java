@@ -28,6 +28,11 @@ public class LilacEncoder implements TomlEncoder
 	) {
 		StringBuilder builder = new StringBuilder();
 
+		if (configuration.getBacking().isEmpty())
+		{
+			return "";
+		}
+
 		encodeTable(configuration.getBacking(), new ArrayList<>(), builder, parser);
 
 		// Trim
@@ -104,7 +109,7 @@ public class LilacEncoder implements TomlEncoder
 							builder.append(" #" +tableValue.getComment());
 						}
 
-						builder.append('\n');
+						//builder.append('\n');
 
 						encodeTable(tableValue.get(), new ArrayList<>(), builder, parser);
 						continue;
@@ -136,7 +141,7 @@ public class LilacEncoder implements TomlEncoder
 				}
 			}
 
-			builder.append('\n');
+			//builder.append('\n');
 		}
 	}
 }

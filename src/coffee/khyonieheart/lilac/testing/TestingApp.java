@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -12,53 +11,16 @@ import java.util.Scanner;
 import coffee.khyonieheart.lilac.Lilac;
 import coffee.khyonieheart.lilac.TomlConfiguration;
 import coffee.khyonieheart.lilac.TomlParser;
-import coffee.khyonieheart.lilac.parser.LilacDecoder;
-import coffee.khyonieheart.lilac.parser.analyzer.ParserStep;
 
 public class TestingApp
 {
-	private static List<String> ignoredTestFilter = List.of("bad", "newline.toml", "datetime");
-
 	public static void main(
 		String[] args
 	) {
 		List<File> validTests = new ArrayList<>(); // Tests that are meant to pass
 		List<File> invalidTests = new ArrayList<>(); // Tests that are meant to fail
 		collectTests(new File("tests/valid/"), validTests);
-		//collectTests(new File("tests/invalid/"), invalidTests);
-
-		// Filter some tests we can ignore for the time being
-		List<File> ignoredTests = new ArrayList<>();
-
-		File file;
-		Iterator<File> testIter = validTests.iterator();
-		while (testIter.hasNext())
-		{
-			file = testIter.next();
-			for (String filter : ignoredTestFilter)
-			{
-				if (file.getAbsolutePath().contains(filter))
-				{
-					ignoredTests.add(file);
-					testIter.remove();
-					continue;
-				}
-			}
-		}
-		testIter = invalidTests.iterator();
-		while (testIter.hasNext())
-		{
-			file = testIter.next();
-			for (String filter : ignoredTestFilter)
-			{
-				if (file.getAbsolutePath().contains(filter))
-				{
-					ignoredTests.add(file);
-					testIter.remove();
-					continue;
-				}
-			}
-		}
+		collectTests(new File("tests/invalid/"), invalidTests);
 
 		Map<Class<? extends Exception>, Integer> failCounts = new HashMap<>();
 
@@ -87,20 +49,11 @@ public class TestingApp
 					failCounts.put(e.getClass(), 0);
 				}
 
-				int stepCount = 0;
-				for (ParserStep step : ((LilacDecoder) parser.getDecoder()).getSteps())
-				{
-					System.out.println("Step " + stepCount + ": " + step.getState());
-					stepCount++;
-				}
 				System.out.println("\033[48;5;1m[ FAIL ] " + test.getName() + "\033[0m");
 				e.printStackTrace();
 
-				System.out.println(document);
-
 				failCounts.put(e.getClass(), failCounts.get(e.getClass()) + 1);
 				failed++;
-				return;
 			}
 		}
 
@@ -127,7 +80,7 @@ public class TestingApp
 			}
 		}
 
-		System.out.println("Testing complete. Performed " + total + " tests, passed " + passed + "/" + total + ", failed " + failed + "/" + total + " (" + ignoredTests.size() + " tests ignored) (" + (((float) passed / total) * 100) + "%) over " + (System.currentTimeMillis() - startTime) + " millis");
+		System.out.println("Testing complete. Performed " + total + " tests, passed " + passed + "/" + total + ", failed " + failed + "/" + total + " (" + (((float) passed / total) * 100) + "%) over " + (System.currentTimeMillis() - startTime) + " millis");
 		System.out.println("Error breakdown:");
 		failCounts.forEach((k, v) -> {
 			System.out.println("\t" + k.getSimpleName() + ": " + v);

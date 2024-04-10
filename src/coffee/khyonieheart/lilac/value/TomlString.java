@@ -30,6 +30,11 @@ public class TomlString implements Commentable, TomlObject<String>, CharSequence
 		return this.string;
 	}
 
+	public StringType getStringType()
+	{
+		return this.type;
+	}
+
 	@Override
 	public TomlObjectType getType() 
 	{

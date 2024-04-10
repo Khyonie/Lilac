@@ -31,7 +31,7 @@ public class ProductionInlineTable
 			return Optional.empty();
 		}
 
-		while (parser.consumeCharacters(' ', '\t'));
+		parser.toNextSymbol();
 
 		Map<String, TomlObject<?>> data = new LinkedHashMap<>();
 
@@ -45,12 +45,17 @@ public class ProductionInlineTable
 
 		while (parser.parseLiteral(","))
 		{
-			while (parser.consumeCharacters(' ', '\t'));
+			parser.toNextSymbol();
+			if (parser.charAtPointer() == '}') // I hate v1.1.
+			{
+				break;
+			}
+
 			parseKeyValuePair(parser, data);
-			while (parser.consumeCharacters(' ', '\t'));
+			parser.toNextSymbol();
 		}
 
-		while (parser.consumeCharacters(' ', '\t'));
+		parser.toNextSymbol();
 
 		if (!parser.parseLiteral("}"))
 		{

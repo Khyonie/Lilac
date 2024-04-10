@@ -5,6 +5,7 @@ name = "Lilac"
 source = [ "src/" ]
 output = [ "target/{TASK_NAME}/Lilac.jar", "~/Development/Working/toml-test/lib/Lilac.jar" ]
 include = [ "COPYING", "COPYING.LESSER" ]
+java_version = 17
 
 [task_main]
 

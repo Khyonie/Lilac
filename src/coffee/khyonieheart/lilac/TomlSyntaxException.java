@@ -24,7 +24,11 @@ public class TomlSyntaxException extends Exception
 	@Override
 	public void printStackTrace()
 	{
-		String lineString = document.split("\n")[line] + "↩";
+		String lineString = document.split("\n")[line];
+		if (line < document.split("\n").length - 1)
+		{
+			lineString += "⏎";
+		}
 
 		System.out.println("TOML syntax error: " + this.getMessage() + " at line " + (line + 1) + ", position " + (this.position + 1));
 		System.out.println(lineString);

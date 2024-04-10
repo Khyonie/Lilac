@@ -54,7 +54,7 @@ public class LilacDecoder implements TomlDecoder
 		this.document = Objects.requireNonNull(document);
 		if (this.document.isEmpty())
 		{
-			throw new IllegalArgumentException("Given TOML document must not be empty");
+			return new TomlConfiguration(new LinkedHashMap<>());
 		}
 
 		// Reset state

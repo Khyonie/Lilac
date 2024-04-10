@@ -33,6 +33,7 @@ public class ProductionKeyValuePair
 		String javaType = null;
 		if (parser.parseLiteral(":"))
 		{
+			while (parser.consumeCharacters(' ', '\t'));
 			Optional<String> typeOption = ProductionJavaType.parse(parser);
 			
 			if (typeOption.isEmpty())
