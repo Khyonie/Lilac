@@ -30,6 +30,7 @@ import coffee.khyonieheart.lilac.value.formatting.TomlComment;
 public class LilacDecoder implements TomlDecoder
 {
 	private static final String TOML_COMMENT_KEY = "Lilac#TomlComment";
+	private static final char BOM_MARK = '\uFEFF';
 
 	private int[] pointer = new int[] { 0 };
 	private String document;
@@ -67,9 +68,9 @@ public class LilacDecoder implements TomlDecoder
 		this.createdTableKeys.clear();
 
 		// Check for BOM mark
-		if (this.document.contains("\uFEFF"))
+		if (this.document.contains("" + BOM_MARK))
 		{
-			if (this.document.charAt(0) != '\uFEFF')
+			if (this.document.charAt(0) != BOM_MARK)
 			{
 				throw new TomlSyntaxException("Byte-order-mark (BOM) must be at the very start of the given document", line, linePointer, 1, document);
 			}

@@ -23,7 +23,7 @@ public class ProductionInteger
 		Optional<String> stringOption = parser.parseRegex("0[xX]((?:_|[0-9a-fA-F])+)");
 		if (stringOption.isPresent())
 		{
-			value = stringOption.get().substring(2).replace("_", "");
+			value = stringOption.get().replace("_", "");
 			base = NumberBase.HEXADECIMAL;
 
 			return Optional.of(toValue(value, type, base));
@@ -33,7 +33,7 @@ public class ProductionInteger
 		stringOption = parser.parseRegex("0o((?:_|[0-7])+)");
 		if (stringOption.isPresent())
 		{
-			value = stringOption.get().substring(2).replace("_", "");
+			value = stringOption.get().replace("_", "");
 			base = NumberBase.OCTAL;
 
 			return Optional.of(toValue(value, type, base));
@@ -43,7 +43,7 @@ public class ProductionInteger
 		stringOption = parser.parseRegex("0[bB]((?:_|[01])+)");
 		if (stringOption.isPresent())
 		{
-			value = stringOption.get().substring(2).replace("_", "");
+			value = stringOption.get().replace("_", "");
 			base = NumberBase.BINARY;
 
 			return Optional.of(toValue(value, type, base));

@@ -29,6 +29,14 @@ public class ProductionArray
 
 		parser.toNextSymbol();
 
+		Optional<String> commentOption = ProductionComment.parse(parser);
+		while (commentOption.isPresent())
+		{
+			// TODO I'm not sure how to handle this, we'll discard comments for now
+			parser.toNextSymbol();
+			commentOption = ProductionComment.parse(parser);
+		}
+
 		List<TomlObject<?>> data = new ArrayList<>();
 		Optional<TomlObject<?>> valueOption = ProductionValue.parse(parser, null);
 		TomlObject<?> previousValue = null;
@@ -38,8 +46,9 @@ public class ProductionArray
 			previousValue = valueOption.get();
 
 			parser.toNextSymbol();
-			Optional<String> commentOption = ProductionComment.parse(parser);
-			if (commentOption.isPresent())
+
+			commentOption = ProductionComment.parse(parser);
+			while (commentOption.isPresent())
 			{
 				if (valueOption.get() instanceof Commentable c)
 				{
@@ -47,6 +56,7 @@ public class ProductionArray
 				}
 
 				parser.toNextSymbol();
+				commentOption = ProductionComment.parse(parser);
 			}
 
 			if (parser.parseLiteral(","))
@@ -62,7 +72,7 @@ public class ProductionArray
 			break;
 		}
 
-		Optional<String> commentOption = ProductionComment.parse(parser);
+		commentOption = ProductionComment.parse(parser);
 		if (commentOption.isPresent())
 		{
 			if (previousValue instanceof Commentable c)

@@ -107,7 +107,23 @@ public class ProductionMultilineBasicString
 
 						continue;
 					}
-					case ' ' -> { // Line-ending backslash
+					case ' ' -> { // Line-ending space
+						parser.incrementPointer(1);
+						pointer++;
+						while (Character.isWhitespace(data.charAt(pointer)))
+						{
+							if (data.charAt(pointer) == '\n')
+							{
+								parser.nextLine();
+							}
+
+							pointer++;
+							parser.incrementPointer(1);
+						}
+
+						continue;
+					}
+					case '\t' -> { // Line-ending tab
 						parser.incrementPointer(1);
 						pointer++;
 						while (Character.isWhitespace(data.charAt(pointer)))
@@ -139,7 +155,7 @@ public class ProductionMultilineBasicString
 						pointer++;
 					}
 					// TODO Unicode U+xxxx and U+xxxxxxxx escapes
-					default -> throw new TomlSyntaxException("Illegal escaped character \\" + currentChar, parser.getLine(), parser.getLinePointer(), 1, parser.getCurrentDocument());
+					default -> throw new TomlSyntaxException("Illegal escaped character '\\" + currentChar + "'", parser.getLine(), parser.getLinePointer(), 1, parser.getCurrentDocument());
 				}
 
 				continue;

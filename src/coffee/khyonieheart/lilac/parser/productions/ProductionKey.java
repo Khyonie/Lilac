@@ -10,7 +10,7 @@ import coffee.khyonieheart.lilac.parser.LilacDecoder;
 public class ProductionKey
 {
 	private static final String BASIC_KEY_REGEX = "([A-Za-z0-9_-]+)";
-	private static final String QUOTED_KEY_REGEX = "\"((?:\\\"|.)*?)\"";
+	private static final String QUOTED_KEY_REGEX = "\"((?:\\\"|[^\"])*?)\"";
 	private static final String LITERAL_KEY_REGEX = "'((?:\\'|.)*?)'";
 
 	public static Optional<List<String>> parse(

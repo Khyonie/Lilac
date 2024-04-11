@@ -9,10 +9,12 @@ import coffee.khyonieheart.lilac.value.TomlOffsetDateTime;
 
 public class ProductionOffsetDateTime
 {
+	private static final String PATTERN = "(\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2}))";
+
 	public static Optional<TomlObject<?>> parse(
 		LilacDecoder parser
 	) {
-		Optional<String> valueString = parser.parseRegex("(\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2}))");
+		Optional<String> valueString = parser.parseRegex(PATTERN);
 
 		if (valueString.isEmpty())
 		{
