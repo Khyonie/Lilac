@@ -58,4 +58,10 @@ public class TomlLocalDateTime implements Commentable, TomlObject<LocalDateTime>
 	{
 		this.comment = comment;
 	}
+
+	@Override
+	public TomlLocalDateTime clone()
+	{
+		return new TomlLocalDateTime(this.value.plusDays(0)); // See TomlLocalDate
+	}
 }

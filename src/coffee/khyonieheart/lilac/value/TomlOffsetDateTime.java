@@ -59,4 +59,10 @@ public class TomlOffsetDateTime implements Commentable, TomlObject<OffsetDateTim
 	{
 		this.comment = comment;
 	}
+
+	@Override
+	public TomlOffsetDateTime clone()
+	{
+		return new TomlOffsetDateTime(this.value.plusNanos(0)); // See TomlLocalDate
+	}
 }

@@ -1,6 +1,7 @@
 package coffee.khyonieheart.lilac.value;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -115,5 +116,18 @@ public class TomlInlineTable implements Commentable, TomlObject<Map<String, Toml
 		String comment
 	) {
 		this.comment = comment;
+	}
+
+	@Override
+	public TomlInlineTable clone()
+	{
+		Map<String, TomlObject<?>> clone = new LinkedHashMap<>(this.backing.size());
+
+		for (String key : this.backing.keySet())
+		{
+			clone.put(key, this.backing.get(key).clone());
+		}
+
+		return new TomlInlineTable(clone);
 	}
 }

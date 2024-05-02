@@ -122,4 +122,27 @@ public class TomlTableArray implements TomlObject<List<Map<String, TomlObject<?>
 	{
 		throw new UnsupportedOperationException("Table arrays do not themselves contain newlines");
 	}
+
+	@Override
+	public TomlTableArray clone()
+	{
+		List<Map<String, TomlObject<?>>> clone = new ArrayList<>();
+
+		for (Map<String, TomlObject<?>> map : this.data)
+		{
+			Map<String, TomlObject<?>> mapClone = new LinkedHashMap<>();
+
+			for (String key : map.keySet())
+			{
+				mapClone.put(key, map.get(key).clone());
+			}
+
+			clone.add(mapClone);
+		}
+
+		TomlTableArray newClone = new TomlTableArray(new ArrayList<>(this.keys));
+		newClone.data = clone;
+
+		return newClone;
+	}
 }

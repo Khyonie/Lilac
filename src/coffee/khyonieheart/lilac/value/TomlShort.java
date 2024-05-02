@@ -102,4 +102,10 @@ public class TomlShort implements Commentable, TomlObject<Short>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlShort clone()
+	{
+		return new TomlShort(this.value, this.base);
+	}
 }

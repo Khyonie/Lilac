@@ -73,6 +73,14 @@ public class TomlTable implements Commentable, TomlObject<Map<String, TomlObject
 		return this.parentTables;
 	}
 
+	public TomlTable setParents(
+		List<String> newParents
+	) {
+		this.parentTables.addAll(newParents);
+
+		return this;
+	}
+
 	public List<String> getCanonicalPath()
 	{
 		List<String> allParents = new ArrayList<>(this.parentTables);
@@ -130,5 +138,25 @@ public class TomlTable implements Commentable, TomlObject<Map<String, TomlObject
 	public void incrementTrailingNewlines() 
 	{
 		this.newlines++;
+	}
+
+	@Override
+	public TomlTable clone()
+	{
+		Map<String, TomlObject<?>> clone = new LinkedHashMap<>(this.data.size());
+
+		for (String key : this.data.keySet())
+		{
+			clone.put(key, this.data.get(key).clone());
+		}
+
+		List<String> cloneParents = new ArrayList<>(this.parentTables);
+
+		if (this.discreteIdentifier != null)
+		{
+			return new TomlTable(this.discreteIdentifier, cloneParents).rebase(clone);
+		}
+
+		return new TomlTable(cloneParents).rebase(clone);
 	}
 }

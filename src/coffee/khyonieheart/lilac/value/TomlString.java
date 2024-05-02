@@ -92,4 +92,10 @@ public class TomlString implements Commentable, TomlObject<String>, CharSequence
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlString clone()
+	{
+		return new TomlString(new String(this.string), this.type);
+	}
 }

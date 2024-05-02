@@ -210,4 +210,11 @@ public class TomlConfigurationBuilder
 			addWhitespace();
 		}
 	}
+
+	// Etc. 
+	//--------------------------------------------------------------------------------
+	public TomlConfiguration finish()
+	{
+		return this.configuration;
+	}
 }

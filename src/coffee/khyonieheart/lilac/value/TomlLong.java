@@ -103,4 +103,10 @@ public class TomlLong implements Commentable, TomlObject<Long>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlLong clone()
+	{
+		return new TomlLong(this.value, this.base);
+	}
 }

@@ -102,4 +102,10 @@ public class TomlInteger implements Commentable, TomlObject<Integer>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlInteger clone()
+	{
+		return new TomlInteger(this.value, this.base);
+	}
 }

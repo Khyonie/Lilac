@@ -56,4 +56,10 @@ public class TomlBoolean implements Commentable, TomlObject<Boolean>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlBoolean clone()
+	{
+		return new TomlBoolean(this.value);
+	}
 }

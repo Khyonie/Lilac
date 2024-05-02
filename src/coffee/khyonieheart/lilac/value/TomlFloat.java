@@ -71,4 +71,10 @@ public class TomlFloat implements Commentable, TomlObject<Float>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlFloat clone()
+	{
+		return new TomlFloat(this.value);
+	}
 }

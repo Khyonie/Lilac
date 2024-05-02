@@ -102,4 +102,10 @@ public class TomlByte implements Commentable, TomlObject<Byte>
 	{
 		this.newlines++;
 	}
+
+	@Override 
+	public TomlByte clone()
+	{
+		return new TomlByte(this.value, this.base);
+	}
 }

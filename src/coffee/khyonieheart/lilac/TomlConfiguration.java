@@ -2,6 +2,7 @@ package coffee.khyonieheart.lilac;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import coffee.khyonieheart.lilac.value.TomlInlineTable;
 import coffee.khyonieheart.lilac.value.TomlObject;
 import coffee.khyonieheart.lilac.value.TomlTable;
+import coffee.khyonieheart.lilac.value.TomlTableArray;
 
 public class TomlConfiguration
 {
@@ -62,7 +64,6 @@ public class TomlConfiguration
 		}
 
 		return null;
-
 	}
 
 	/**
@@ -501,6 +502,64 @@ public class TomlConfiguration
 		return true;
 	}
 
+	/**
+	 * Creates a copy of the map that backs this configuration without TOML comments and stripping TOML-encoded data.
+	 */
+	public Map<String, Object> toMap()
+	{
+		Map<String, Object> data = new HashMap<>(this.configuration.size());
+
+		for (String key : this.configuration.keySet())
+		{
+			switch (this.configuration.get(key).getType())
+			{
+				case INLINE_TABLE -> data.put(key, populateMap(((TomlInlineTable) this.configuration.get(key)).get()));
+				case TABLE -> data.put(key, populateMap(((TomlInlineTable) this.configuration.get(key)).get()));
+				case TABLE_ARRAY -> {
+					List<Map<String, Object>> list = new ArrayList<>();
+					for (Map<String, TomlObject<?>> subtable : ((TomlTableArray) this.configuration.get(key)).get())
+					{
+						list.add(populateMap(subtable));
+					}
+
+					data.put(key, list);
+				}
+				case COMMENT -> {}
+				default -> data.put(key, this.configuration.get(key).get());
+			}
+		}
+
+		return data;
+	}
+
+	private Map<String, Object> populateMap(
+		Map<String, TomlObject<?>> backing
+	) {
+		Map<String, Object> data = new HashMap<>(backing.size());
+
+		for (String key : backing.keySet())
+		{
+			switch (backing.get(key).getType())
+			{
+				case INLINE_TABLE -> data.put(key, populateMap(((TomlInlineTable) backing.get(key)).get()));
+				case TABLE -> data.put(key, populateMap(((TomlInlineTable) backing.get(key)).get()));
+				case TABLE_ARRAY -> {
+					List<Map<String, Object>> list = new ArrayList<>();
+					for (Map<String, TomlObject<?>> subtable : ((TomlTableArray) backing.get(key)).get())
+					{
+						list.add(populateMap(subtable));
+					}
+
+					data.put(key, list);
+				}
+				case COMMENT -> {}
+				default -> data.put(key, backing.get(key).get());
+			}
+		}
+
+		return data;
+	}
+
 	// Utility
 	//-------------------------------------------------------------------------------- 
 
@@ -526,7 +585,6 @@ public class TomlConfiguration
 		Map<String, TomlObject<?>> targetTable = this.configuration;
 		List<String> parents = new ArrayList<>();
 
-
 		for (int i = 0; i < keys.length; i++)
 		{
 			String key = keys[i];
@@ -549,6 +607,25 @@ public class TomlConfiguration
 			}
 
 			targetTable.put(key, object);
+		}
+	}
+
+	public TomlObject<?> remove(
+		String key
+	) {
+		// TODO This
+		return null;
+	}
+
+	public void setIfNotPresent(
+		TomlConfiguration configuration
+	) {
+		for (String key : configuration.getBacking().keySet())
+		{
+			if (!this.configuration.containsKey(key))
+			{
+				this.configuration.put(key, configuration.getBacking().get(key).clone());
+			}
 		}
 	}
 }

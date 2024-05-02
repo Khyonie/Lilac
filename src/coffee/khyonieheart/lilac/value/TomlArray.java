@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import coffee.khyonieheart.lilac.TomlParser;
 import coffee.khyonieheart.lilac.api.Commentable;
 
 /**
@@ -43,6 +44,42 @@ public class TomlArray implements Commentable, TomlObject<List<TomlObject<?>>>
 	public TomlObjectType getType() 
 	{
 		return TomlObjectType.ARRAY;
+	}
+
+	public String serialize(
+		TomlParser parser
+	) {
+		StringBuilder builder = new StringBuilder("[ ");
+
+		if (parser.getSeparateArrayIntoLines())
+		{
+			builder.append('\n');
+		}
+
+		if (!data.isEmpty())
+		{
+			int index = 0;
+			builder.append(this.data.get(index).serialize());
+
+			for (; index < this.data.size(); index++)
+			{
+				builder.append(", ");
+				if (parser.getSeparateArrayIntoLines())
+				{
+					builder.append('\n');
+				}
+				builder.append((parser.getSeparateArrayIntoLines() ? "\t" : "") + this.data.get(index).serialize());
+			}
+		}
+
+		if (parser.getSeparateArrayIntoLines())
+		{
+			builder.append('\n');
+		}
+
+		builder.append(" ]");
+
+		return builder.toString();
 	}
 
 	@Override
@@ -90,5 +127,18 @@ public class TomlArray implements Commentable, TomlObject<List<TomlObject<?>>>
 	public void incrementTrailingNewlines() 
 	{
 		this.newlines++;
+	}
+
+	@Override
+	public TomlArray clone()
+	{
+		List<TomlObject<?>> clone = new ArrayList<>(this.data.size());
+
+		for (TomlObject<?> obj : this.data)
+		{
+			clone.add(obj.clone());
+		}
+
+		return new TomlArray(clone);
 	}
 }

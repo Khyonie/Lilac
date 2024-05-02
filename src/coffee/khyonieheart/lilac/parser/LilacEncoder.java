@@ -9,6 +9,7 @@ import coffee.khyonieheart.lilac.TomlConfiguration;
 import coffee.khyonieheart.lilac.TomlEncoder;
 import coffee.khyonieheart.lilac.TomlParser;
 import coffee.khyonieheart.lilac.api.Commentable;
+import coffee.khyonieheart.lilac.value.TomlArray;
 import coffee.khyonieheart.lilac.value.TomlByte;
 import coffee.khyonieheart.lilac.value.TomlInteger;
 import coffee.khyonieheart.lilac.value.TomlLong;
@@ -77,7 +78,7 @@ public class LilacEncoder implements TomlEncoder
 			
 			switch (table.get(key).getType())
 			{
-				case ARRAY -> builder.append(parentKeyBuilder + key + " = " + table.get(key).serialize());
+				case ARRAY -> builder.append(parentKeyBuilder + key + " = " + ((TomlArray) table.get(key)).serialize(parser));
 				case BOOLEAN -> builder.append(parentKeyBuilder + key + " = " + table.get(key).serialize());
 				case BYTE -> builder.append(parentKeyBuilder + key + (parser.getStoreInlineTypes() ? ": byte " : "") + " = " + ((TomlByte) table.get(key)).serialize(parser));
 				case COMMENT -> builder.append(table.get(key).serialize());

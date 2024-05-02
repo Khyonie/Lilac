@@ -13,8 +13,8 @@ public class Lilac
 	private Lilac() {}
 
 	private static final int MAJOR_VERSION = 1;
-	private static final int MINOR_VERSION = 3;
-	private static final int PATCH_REVISION = 0;
+	private static final int MINOR_VERSION = 4;
+	private static final int PATCH_REVISION = 1;
 
 	public static int getMajorVersion()
 	{
@@ -36,7 +36,7 @@ public class Lilac
 		return MAJOR_VERSION + "." + MINOR_VERSION + "." + PATCH_REVISION;
 	}
 
-	public static TomlParser newBuilder()
+	public static TomlParser tomlParser()
 	{
 		return new LilacParser();
 	}

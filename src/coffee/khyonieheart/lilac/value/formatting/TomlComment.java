@@ -43,4 +43,10 @@ public class TomlComment implements TomlObject<String>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlComment clone()
+	{
+		return new TomlComment(this.comment);
+	}
 }

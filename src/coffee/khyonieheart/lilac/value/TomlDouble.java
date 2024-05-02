@@ -56,4 +56,10 @@ public class TomlDouble implements Commentable, TomlObject<Double>
 	{
 		this.newlines++;
 	}
+
+	@Override
+	public TomlDouble clone()
+	{
+		return new TomlDouble(this.value);
+	}
 }
