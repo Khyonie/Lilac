@@ -100,7 +100,7 @@ public class LilacEncoder implements TomlEncoder
 					if (tableValue.isDiscrete())
 					{
 						builder.append(tableValue.serialize());
-						for (int i = 0; i < tableValue.getNumberOfTrailingNewlines(); i++)
+						for (int i = 0; i < Math.max(1, tableValue.getNumberOfTrailingNewlines()); i++)
 						{
 							builder.append('\n');
 						}
@@ -136,13 +136,11 @@ public class LilacEncoder implements TomlEncoder
 
 			if (table.get(key).getType() != TomlObjectType.TABLE_ARRAY)
 			{
-				for (int i = 0; i < table.get(key).getNumberOfTrailingNewlines(); i++)
+				for (int i = 0; i < Math.max(1, table.get(key).getNumberOfTrailingNewlines()); i++)
 				{
 					builder.append('\n');
 				}
 			}
-
-			//builder.append('\n');
 		}
 	}
 }

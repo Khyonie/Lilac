@@ -1,5 +1,6 @@
 package coffee.khyonieheart.lilac;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import coffee.khyonieheart.lilac.value.TomlLong;
 import coffee.khyonieheart.lilac.value.TomlObject;
 import coffee.khyonieheart.lilac.value.TomlShort;
 import coffee.khyonieheart.lilac.value.TomlString;
+import coffee.khyonieheart.lilac.value.TomlTable;
 
 /**
  * A utility that helps with creating a TOML configuration. Provides utilites for setting up defaults and sanity checking.
@@ -166,9 +168,33 @@ public class TomlConfigurationBuilder
 		return this.add(key, new TomlDouble(value));
 	}
 
+	// Table 
+	//--------------------------------------------------------------------------------
+	
+	public TomlConfigurationBuilder addTable(
+		String name,
+		String... parents
+	) {
+		Objects.requireNonNull(parents);
+		Objects.requireNonNull(name);
+
+		TomlTable table = new TomlTable(name, Arrays.asList(parents));
+
+		String[] path = new String[parents.length + 1];
+		int i = 0;
+		for (; i < parents.length; i++)
+		{
+			path[i] = parents[i];
+		}
+
+		path[i] = name; 
+
+		return this.add(table, path);
+	}
+
 	// Formatting
 	//-------------------------------------------------------------------------------- 
-	public void setInlineComment(
+	public TomlConfigurationBuilder setInlineComment(
 		String comment
 	) {
 		Objects.requireNonNull(comment);
@@ -181,13 +207,13 @@ public class TomlConfigurationBuilder
 		if (this.formattingTarget instanceof Commentable c)
 		{
 			c.setComment(comment);
-			return;
+			return this;
 		}
 
 		throw new IllegalArgumentException("Cannot insert comment on non-commentable type " + this.formattingTarget.getType().name());
 	}
 
-	public void addWhitespace() 
+	public TomlConfigurationBuilder addWhitespace() 
 	{
 		if (this.formattingTarget == null)
 		{
@@ -195,9 +221,11 @@ public class TomlConfigurationBuilder
 		}
 
 		this.formattingTarget.incrementTrailingNewlines();
+
+		return this;
 	}
 
-	public void addWhitespace(
+	public TomlConfigurationBuilder addWhitespace(
 		int lines
 	) {
 		if (lines < 1)
@@ -209,6 +237,8 @@ public class TomlConfigurationBuilder
 		{
 			addWhitespace();
 		}
+
+		return this;
 	}
 
 	// Etc. 

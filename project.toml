@@ -3,8 +3,8 @@ name = "Lilac"
 
 [task]
 source = [ "src/" ]
-shaded_jars = [ "lib/Anenome.jar" ]
-libraries = [ "lib/Anenome.jar" ]
+#shaded_jars = [ "lib/Anenome.jar" ]
+#libraries = [ "lib/Anenome.jar" ]
 output = [ "target/{TASK_NAME}/Lilac.jar", "~/Development/Working/toml-test/lib/Lilac.jar" ]
 include = [ "COPYING", "COPYING.LESSER" ]
 
