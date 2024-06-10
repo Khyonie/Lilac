@@ -1,5 +1,7 @@
 package coffee.khyonieheart.lilac.value;
 
+import java.io.File;
+
 import coffee.khyonieheart.lilac.api.Commentable;
 
 public class TomlDouble implements Commentable, TomlObject<Double>

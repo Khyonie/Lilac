@@ -13,7 +13,7 @@ public class ProductionString
 {
 	private static final String LEGAL_CHARS = "[^\u0000-\u0008\n-\u001F\u007F]"; // Regex that matches all but illegal chars
 
-	private static final String BASIC_REGEX = "\"((?:\\\"|" + LEGAL_CHARS + ")*)\"";
+	private static final String BASIC_REGEX = "\"((?:\\\"|" + LEGAL_CHARS + ")*?)\"";
 	private static final String MULTILINE_LITERAL_REGEX = "'''(?:\\s*)?((?:'|\n|" + LEGAL_CHARS + ")*)'''";
 	private static final String LITERAL_REGEX = "'(" + LEGAL_CHARS + "*?)'";
 

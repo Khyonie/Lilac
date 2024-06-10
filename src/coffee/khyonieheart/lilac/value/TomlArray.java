@@ -53,13 +53,13 @@ public class TomlArray implements Commentable, TomlObject<List<TomlObject<?>>>
 
 		if (parser.getSeparateArrayIntoLines())
 		{
-			builder.append('\n');
+			builder.append("\n\t");
 		}
 
 		if (!data.isEmpty())
 		{
 			int index = 0;
-			builder.append(this.data.get(index).serialize());
+			builder.append(this.data.get(index++).serialize());
 
 			for (; index < this.data.size(); index++)
 			{
@@ -90,7 +90,7 @@ public class TomlArray implements Commentable, TomlObject<List<TomlObject<?>>>
 		if (!data.isEmpty())
 		{
 			int index = 0;
-			builder.append(this.data.get(index).serialize());
+			builder.append(this.data.get(index++).serialize());
 
 			for (; index < this.data.size(); index++)
 			{
