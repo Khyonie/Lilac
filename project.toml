@@ -1,0 +1,20 @@
+[project]
+name = "Lilac"
+description = "TOML configuration parser."
+version = "2.0.0"
+natures = [ "eclipse", "maven" ]
+
+[dependencies]
+gson = { type = "fetchFromMaven", group_id = "com.google.code.gson", artifact_id = "gson" }
+
+[configuration.main]
+sources = [ "src/main/", "src/api/" ]
+targets = [ "targets/{configuration}/{project_name}-{version}-{configuration}.jar" ]
+java_version = 14
+
+[configuration.testing]
+sources = [ "src/testing/" ]
+dependencies = [ "gson" ]
+targets = [ "{project_name}-{version}-{configuration}.jar" ]
+entry = "coffee.khyonieheart.lilac.TestApp"
+inherit = "main"
