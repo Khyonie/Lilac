@@ -8,6 +8,13 @@ import java.util.Map;
 
 public interface TomlEncoder
 {
+	/**
+	 * Encodes the given map as a TOML string.
+	 *
+	 * @param data Map to encode
+	 *
+	 * @return TOML string representing the given map.
+	 */
 	public String encode(
 		Map<String, Object> data
 	);
