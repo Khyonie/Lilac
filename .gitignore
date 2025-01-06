@@ -1,8 +1,0 @@
-.git/*
-.settings/*
-.wisteria/*
-target/*
-targets/*
-tests/*
-checklist.md
-*.jar
