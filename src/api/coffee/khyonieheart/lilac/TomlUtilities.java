@@ -32,7 +32,13 @@ class TomlUtilities
 			}
 		}
 
-		return null;
+		String[] keysArray = new String[keys.size()];
+		for (int i = 0; i < keysArray.length; i++)
+		{
+			keysArray[i] = keys.removeLast();
+		}
+
+		return keysArray;
 	}
 
 	/**
