@@ -1,9 +1,13 @@
 /*
  * Lilac, a Java TOML lanugage library
- * Copyright (C) 2025 Hailey-Jane "Khyonie" Garrett
+ * Copyright (C) 2026 Hailey-Jane "Khyonie" Garrett
  */ 
 package coffee.khyonieheart.lilac;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,9 +23,6 @@ import java.util.Objects;
  * This type distinguishes between two types of "get" methods: exception-throwing, and null-returning. 
  * Exception-throwing methods will throw an exception if any part of a key cannot be resolved.
  * Null-returning methods will return null if any part of a key cannot be resolved.
- *
- * Values returned from this object are and should be treated as read-only. 
- * Tables and arrays are converted into unmodifiable maps and lists.
  *
  * @since 2.1.0
  */
@@ -198,5 +199,81 @@ public class TomlConfiguration
 		String fullyQualifiedKey
 	) {
 		return this.getWithCast(fullyQualifiedKey, true, Boolean.class);
+	}
+
+	public OffsetDateTime getOffsetDateTime(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, OffsetDateTime.class);
+	}
+
+	public OffsetDateTime getOffsetDateTimeOrNull(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, false, OffsetDateTime.class);
+	}
+
+	public LocalDateTime getLocalDateTime(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, LocalDateTime.class);
+	}
+
+	public LocalDateTime getLocalDateTimeOrNull(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, false, LocalDateTime.class);
+	}
+
+	public LocalDate getLocalDate(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, LocalDate.class);
+	}
+
+	public LocalDate getLocalDateOrNull(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, false, LocalDate.class);
+	}
+
+	public LocalTime getLocalTime(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, LocalTime.class);
+	}
+
+	public LocalTime getLocalTimeOrNull(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, false, LocalTime.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Object> getArray(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, List.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<Object> getArrayOrNull(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, false, List.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	public Map<String, Object> getTable(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, Map.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	public Map<String, Object> getTableOrNull(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, false, Map.class);
 	}
 }
