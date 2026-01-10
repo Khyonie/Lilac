@@ -6,7 +6,9 @@ package coffee.khyonieheart.lilac.configuration;
 
 public enum ArrayTypeContext
 {
+	/** Array is a regular array. */
 	REGULAR,
+	/** Array is an array of tables. */
 	ARRAY_OF_TABLES,
 	;
 }
