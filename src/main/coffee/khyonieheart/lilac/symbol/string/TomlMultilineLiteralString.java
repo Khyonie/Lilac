@@ -79,7 +79,7 @@ public class TomlMultilineLiteralString extends Symbol<String>
 
 			if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
 			{
-				throw TomlSyntaxException.of("Control characters cannot be used in TOML strings", document);
+				throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
 			}
 
 			builder.append(current);

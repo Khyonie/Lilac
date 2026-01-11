@@ -472,6 +472,7 @@ public class LilacEncoder implements TomlEncoder
 				case '\f' -> builder.append("\\f");
 				case '\r' -> builder.append("\\r"); 
 				case '\0' -> builder.append("\\u0000");
+				case '\u001B' -> builder.append("\\e");
 				case '\u007F' -> builder.append("\\u007F");
 				case '\u001F' -> builder.append("\\u001F");
 				case '"' -> {
