@@ -16,5 +16,5 @@ java_version = 14
 sources = [ "src/testing/" ]
 dependencies = [ "gson" ]
 targets = [ "{project_name}-{version}-{configuration}.jar" ]
-entry = "coffee.khyonieheart.lilac.TestApp"
+entry = "coffee.khyonieheart.lilac.SmallTestApp"
 inherit = "main"
