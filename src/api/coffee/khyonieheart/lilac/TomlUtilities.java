@@ -17,9 +17,19 @@ class TomlUtilities
 			{
 				case '\'' -> keys.push(parseLiteralKey(fullyQualifiedKey, pointer));
 				case '"' -> keys.push(parseQuotedKey(fullyQualifiedKey, pointer));
-				case '.' -> throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". A key separator may not be the start of a key.");
 				default -> {
 					char current = fullyQualifiedKey.charAt(pointer[0]);
+
+					if (current == '.')
+					{
+						if (pointer[0] == 0)
+						{
+							throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". A key separator may not be the start of a key.");
+						} 
+
+						pointer[0]++;
+						continue;
+					}
 
 					if ((current >= '0' && current <= '9') || (current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z') || current == '-' || current == '_')
 					{
@@ -61,7 +71,7 @@ class TomlUtilities
 				break;
 			}
 			
-			if ((currentChar >= 'a' && currentChar <= 'z') || (currentChar >= 'A' && currentChar <= 'Z') || (currentChar >= 0 && currentChar <= '9'))
+			if ((currentChar >= 'a' && currentChar <= 'z') || (currentChar >= 'A' && currentChar <= 'Z') || (currentChar >= 0 && currentChar <= '9') || currentChar == '_' || currentChar == '-')
 			{
 				builder.append(currentChar);
 				pointer[0]++;
@@ -112,7 +122,7 @@ class TomlUtilities
 			}
 
 			// Illegal characters
-			if (current <= '\b' || (current >= '\n' && current <= '\u001F') || current == '\u007F')
+			if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
 			{
 				throw new IllegalArgumentException("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")");
 			}
@@ -203,9 +213,9 @@ class TomlUtilities
 				break;
 			}
 
-			if (current <= '\b' || (current >= '\n' && current <= '\u001F') || current == '\u007F')
+			if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
 			{
-				throw new IllegalArgumentException("Control characters cannot be used in TOML strings");
+				throw new IllegalArgumentException("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")");
 			}
 
 			builder.append(current);
