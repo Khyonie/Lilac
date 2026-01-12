@@ -1,7 +1,7 @@
 [project]
 name = "Lilac"
 description = "TOML configuration parser."
-version = "2.1.1"
+version = "2.1.2"
 natures = [ "eclipse", "maven" ]
 
 [dependencies]
