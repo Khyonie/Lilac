@@ -29,7 +29,7 @@ import java.util.Objects;
 public class TomlConfiguration
 {
 	private final Map<String, Object> data;
-	private Map<String, Object> cache = new HashMap<>();
+	private Map<List<String>, Object> cache = new HashMap<>();
 
 	public TomlConfiguration(
 		Map<String, Object> data
@@ -44,17 +44,16 @@ public class TomlConfiguration
 	) {
 		String[] keys = TomlUtilities.fullyQualifiedKeyToArray(fullyQualifiedKey);
 
-		// Rebuild key for cache
-		String sanitizedKey = String.join(".", keys);
+		List<String> cacheKey = List.of(keys);
 
-		if (cache.containsKey(sanitizedKey))
+		if (cache.containsKey(cacheKey))
 		{
-			Object value = cache.get(sanitizedKey);
+			Object value = cache.get(cacheKey);
 			if (value == null && throwException)
 			{
 				throw new NoSuchElementException("No such key \"" + fullyQualifiedKey + "\" in TOML configuration");
 			}
-			return cache.get(sanitizedKey);
+			return cache.get(cacheKey);
 		}
 		
 		// Otherwise lookup value iteratively
@@ -104,7 +103,7 @@ public class TomlConfiguration
 		}
 
 		// Cache and return
-		cache.put(sanitizedKey, value);
+		cache.put(cacheKey, value);
 		return value;
 	}
 
@@ -157,18 +156,24 @@ public class TomlConfiguration
 	}
 
 	/**
-	 * Gets an integer from this configuration.
+	 * Gets a long from this configuration.
 	 *
 	 * @param fullyQualifiedKey Fully-qualified TOML key
 	 *
-	 * @return An integer from this map.
+	 * @return A long from this map.
 	 * @throws NoSuchElementException Thrown if any part of the key cannot be resolved.
-	 * @throws ClassCastException Thrown if value cannot be cast to an integer, or if a table section of the key cannot be resolved.
+	 * @throws ClassCastException Thrown if value cannot be cast to a long, or if a table section of the key cannot be resolved.
 	 */
+	public long getLong(
+		String fullyQualifiedKey
+	) {
+		return this.getWithCast(fullyQualifiedKey, true, Long.class);
+	}
+
 	public int getInteger(
 		String fullyQualifiedKey
 	) {
-		return this.getWithCast(fullyQualifiedKey, true, Integer.class);
+		return Math.toIntExact(this.getLong(fullyQualifiedKey));
 	}
 
 	/**

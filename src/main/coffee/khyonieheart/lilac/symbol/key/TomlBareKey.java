@@ -61,7 +61,7 @@ public class TomlBareKey extends Symbol<String>
 			throw TomlSyntaxException.of("Illegal bare key character \"" + current + "\"", document);
 		} while (document.hasNext());
 
-		if (builder.isEmpty())
+		if (builder.length() == 0)
 		{
 			document.rewindToPin();
 			throw TomlSyntaxException.of("Key cannot be empty", document);

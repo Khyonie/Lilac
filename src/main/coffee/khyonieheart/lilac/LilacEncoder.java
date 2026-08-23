@@ -4,17 +4,10 @@
  */ 
 package coffee.khyonieheart.lilac;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import coffee.khyonieheart.lilac.configuration.ArrayTypeContext;
 import coffee.khyonieheart.lilac.configuration.TableTypeContext;
@@ -22,22 +15,13 @@ import coffee.khyonieheart.lilac.configuration.TomlLinkedHashMap;
 
 public class LilacEncoder implements TomlEncoder
 {
-	private static final char TABLE_HEADER_START      = '[';
-	private static final char TABLE_HEADER_END        = ']';
-	private static final char KEY_SEPARATOR           = '.';
-	private static final char INLINE_TABLE_START      = '{';
-	private static final char INLINE_TABLE_END        = '}';
-	private static final String ARRAY_OF_TABLES_START = "[[";
-	private static final String ARRAY_OF_TABLES_END   = "]]";
-
-	// Style settings
-	private boolean alignEquals   = false; // Equal signs for a table will be aligned with extra whitespace
-	private boolean breakArrays   = false; // Whether or not to break array values onto separate lines
-	private boolean newlineTables = true; // Whether or not to put a newline before table headers
+	private final TomlEncoderSettings settings = new TomlEncoderSettings();
+	private final TomlValueEncoder values = new TomlValueEncoder(settings);
 
 	@Override
-	public String encode(Map<String, Object> data) 
-	{
+	public String encode(
+		Map<String, Object> data
+	) {
 		StringBuilder builder = new StringBuilder();
 		encode(data, data, new ArrayDeque<>(), builder);
 
@@ -51,228 +35,107 @@ public class LilacEncoder implements TomlEncoder
 		Deque<String> keys,
 		StringBuilder builder
 	) {
-		int maxKeyLength = Integer.MIN_VALUE;
+		int maxKeyLength = maxKeyLength(data);
 
-		// If we want to align equals in columns, we need to find the longest key length;
-		if (alignEquals)
+		for (Map.Entry<String, Object> entry : data.entrySet())
 		{
-			for (String key : data.keySet())
+			if (!shouldEmitChild(rootData, entry.getValue()))
 			{
-				if (key.length() > maxKeyLength)
-				{
-					maxKeyLength = key.length();
-				}
+				encodeValue(rootData, entry, maxKeyLength, builder);
 			}
 		}
 
-		for (String key : data.keySet())
+		for (Map.Entry<String, Object> entry : data.entrySet())
 		{
-			Object value = data.get(key);
-			
-			if (value instanceof Map)
+			if (shouldEmitChild(rootData, entry.getValue()))
 			{
-				if ((rootData instanceof TomlLinkedHashMap && ((TomlLinkedHashMap) rootData).getTableType((Map<String, Object>) value) != TableTypeContext.INLINE) || !(rootData instanceof TomlLinkedHashMap))
-				{
-					keys.push(key);
-					
-					if (newlineTables && !builder.isEmpty())
-					{
-						builder.append('\n');
-					}
-
-					builder.append(encodeTableHeader(keys))
-						.append('\n');
-					encode(rootData, (Map<String, Object>) value, keys, builder);
-
-					keys.pop();
-					continue;
-				}
+				encodeChild(rootData, entry, keys, builder);
 			}
-
-			// Array of tables
-			if (value instanceof List)
-			{
-				if (rootData instanceof TomlLinkedHashMap && ((TomlLinkedHashMap) rootData).getArrayType((List<Object>) value) == ArrayTypeContext.ARRAY_OF_TABLES)
-				{
-					keys.push(key);
-					encodeArrayOfTables(rootData, (List<Map<String, Object>>) value, keys, builder);
-					keys.pop();
-					continue;
-				}
-			}
-
-			builder.append(sanitizeKey(key));
-
-			// Handle column alignment
-			if (alignEquals)
-			{
-				builder.append(" ".repeat(maxKeyLength - key.length()));
-			}
-
-			builder.append(" = ")
-				.append(encodeValue(rootData, value, 0))
-				.append('\n');
 		}
 	}
 
-	/** Branch method which takes any TOML-spec type and calls the appropriate encoder method. */
 	@SuppressWarnings("unchecked")
-	private String encodeValue(
+	private void encodeChild(
 		Map<String, Object> rootData,
-		Object object,
-		int tabDepth
+		Map.Entry<String, Object> entry,
+		Deque<String> keys,
+		StringBuilder builder
 	) {
-		if (object instanceof Map)
-		{
-			return encodeTableInline(rootData, (Map<String, Object>) object, tabDepth + 1);
-		}
+		String key = entry.getKey();
+		Object value = entry.getValue();
+		keys.push(key);
 
-		if (object instanceof List)
+		if (shouldEmitTable(rootData, value))
 		{
-			return encodeArray(rootData, (List<Object>) object, tabDepth + 1);
-		}
-
-		if (object instanceof String)
-		{
-			return encodeString((String) object);
-		}
-
-		if (object instanceof Float)
-		{
-			return encodeFloat((float) object);
-		}
-
-		if (object instanceof OffsetDateTime)
-		{
-			return encodeOffsetDateTime((OffsetDateTime) object);
-		}
-
-		if (object instanceof LocalDateTime)
-		{
-			return encodeDateTime((LocalDateTime) object);
-		}
-
-		if (object instanceof LocalDate)
-		{
-			return encodeDate((LocalDate) object);
-		}
-
-		if (object instanceof LocalTime)
-		{
-			return encodeTime((LocalTime) object);
-		}
-
-		return object.toString();
-	}
-
-	// --------------------------------------------------
-	// Regular types
-	// --------------------------------------------------
-	
-	/**
-	 * Encodes a string.
-	 */
-	private String encodeString(
-		String string
-	) {
-		if (string.contains("\n"))
-		{
-			if (containsControlCharacter(string))
+			if (settings.newlineTables && builder.length() != 0)
 			{
-				return "\"\"\"" + escapeControlCharacters(string) + "\"\"\"";
+				builder.append('\n');
 			}
 
-			return "'''" + string + "'''";
+			builder.append(TomlKeyEncoder.tableHeader(keys))
+				.append('\n');
+			encode(rootData, (Map<String, Object>) value, keys, builder);
+		} else {
+			encodeArrayOfTables(rootData, (List<Map<String, Object>>) value, keys, builder);
 		}
 
-		if (containsControlCharacter(string))
+		keys.pop();
+	}
+
+	private void encodeValue(
+		Map<String, Object> rootData,
+		Map.Entry<String, Object> entry,
+		int maxKeyLength,
+		StringBuilder builder
+	) {
+		String key = entry.getKey();
+		builder.append(TomlKeyEncoder.sanitizeKey(key));
+
+		if (settings.alignEquals)
 		{
-			return "\"" + escapeControlCharacters(string) + "\"";
+			builder.append(" ".repeat(maxKeyLength - key.length()));
 		}
 
-		return "'" + string + "'";
+		builder.append(" = ")
+			.append(values.encode(rootData, entry.getValue(), 0))
+			.append('\n');
 	}
 
-	private String encodeFloat(
-		float f32
+	@SuppressWarnings("unchecked")
+	private boolean shouldEmitTable(
+		Map<String, Object> rootData,
+		Object value
 	) {
-		if (f32 == Float.POSITIVE_INFINITY)
+		if (!(value instanceof Map))
 		{
-			return "+inf";
+			return false;
 		}
 
-		if (f32 == Float.NEGATIVE_INFINITY)
+		if (!(rootData instanceof TomlLinkedHashMap))
 		{
-			return "-inf";
+			return true;
 		}
 
-		if (f32 != f32)
-		{
-			return "nan";
-		}
-
-		return Float.toString(f32);
+		return ((TomlLinkedHashMap) rootData).getTableType((Map<String, Object>) value) != TableTypeContext.INLINE;
 	}
 
-	/**
-	 * Encodes a table header.
-	 */
-	private String encodeTableHeader(
-		Deque<String> keys
+	@SuppressWarnings("unchecked")
+	private boolean isArrayOfTables(
+		Map<String, Object> rootData,
+		Object value
 	) {
-		StringBuilder builder = new StringBuilder();
-		builder.append(TABLE_HEADER_START)
-			.append(keysToString(keys))
-			.append(TABLE_HEADER_END);
-
-		return builder.toString();
+		return value instanceof List
+			&& rootData instanceof TomlLinkedHashMap
+			&& ((TomlLinkedHashMap) rootData).getArrayType((List<Object>) value) == ArrayTypeContext.ARRAY_OF_TABLES;
 	}
 
-	private String encodeOffsetDateTime(
-		OffsetDateTime odt
+	private boolean shouldEmitChild(
+		Map<String, Object> rootData,
+		Object value
 	) {
-		return encodeDateTime(odt.toLocalDateTime()) + odt.getOffset().toString();
+		return shouldEmitTable(rootData, value) || isArrayOfTables(rootData, value);
 	}
 
-	private String encodeDateTime(
-		LocalDateTime ldt
-	) {
-		return encodeDate(ldt.toLocalDate()) + "T" + encodeTime(ldt.toLocalTime());
-	}
-
-	private String encodeDate(
-		LocalDate date
-	) {
-		String year = Integer.toString(date.getYear());
-		while (year.length() < 4)
-		{
-			year = "0" + year;
-		}
-
-		String month = (date.getMonthValue() >= 10 ? "" : "0") + date.getMonthValue(); 
-		String day = (date.getDayOfMonth() >= 10 ? "" : "0") + date.getDayOfMonth();
-
-		return year + "-" + month + "-" + day;
-	}
-
-	private String encodeTime(
-		LocalTime time
-	) {
-		String hours = (time.getHour() >= 10 ? "" : "0") + time.getHour();
-		String minutes = (time.getMinute() >= 10 ? "" : "0") + time.getMinute();
-		String seconds = (time.getSecond() >= 10 ? "" : "0") + time.getSecond();
-		int nanos = time.getNano() / 1000000;
-
-		return hours + ":" + minutes + ":" + seconds + (nanos == 0 ? "" : "." + nanos);
-	}
-
-	// --------------------------------------------------
-	// Compound types
-	// --------------------------------------------------
-
-	/**
-	 * Encodes an array of tables.
-	 */
 	private void encodeArrayOfTables(
 		Map<String, Object> rootData,
 		List<Map<String, Object>> data,
@@ -281,96 +144,33 @@ public class LilacEncoder implements TomlEncoder
 	) {
 		for (Map<String, Object> table : data)
 		{
-			if (!builder.isEmpty() && newlineTables)
+			if (builder.length() != 0 && settings.newlineTables)
 			{
 				builder.append('\n');
 			}
 
-			builder.append(ARRAY_OF_TABLES_START)
-				.append(keysToString(keys))
-				.append(ARRAY_OF_TABLES_END)
+			builder.append(TomlKeyEncoder.arrayOfTablesHeader(keys))
 				.append('\n');
 
 			encode(rootData, table, keys, builder);
 		}
 	}
 
-	/** 
-	 * Encodes an inline table.
-	 */
-	private String encodeTableInline(
-		Map<String, Object> rootData,
-		Map<String, Object> table,
-		int tabDepth
+	private int maxKeyLength(
+		Map<String, Object> data
 	) {
-		StringBuilder builder = new StringBuilder();
-		builder.append(INLINE_TABLE_START);
-
-		Iterator<Entry<String, Object>> entryIter = table.entrySet().iterator();
-		while (entryIter.hasNext())
+		if (!settings.alignEquals)
 		{
-			Entry<String, Object> entry = entryIter.next();
-			String key = entry.getKey();
-			Object value = entry.getValue();
-
-			builder.append(sanitizeKey(key))
-				.append(" = ")
-				.append(encodeValue(rootData, value, tabDepth + 1));
-
-			if (entryIter.hasNext())
-			{
-				builder.append(", ");
-			}
+			return 0;
 		}
 
-		builder.append(INLINE_TABLE_END);
-
-		return builder.toString();
-	}
-
-	/**
-	 * Encodes a regular array.
-	 */
-	private String encodeArray(
-		Map<String, Object> rootData,
-		List<Object> array,
-		int tabDepth
-	) {
-		StringBuilder builder = new StringBuilder();
-		builder.append(TABLE_HEADER_START);
-
-		if (breakArrays && !array.isEmpty())
+		int maxKeyLength = 0;
+		for (String key : data.keySet())
 		{
-			builder.append('\n');
-			builder.append("\t".repeat(tabDepth));
+			maxKeyLength = Math.max(maxKeyLength, key.length());
 		}
 
-		Iterator<Object> iter = array.iterator();
-		while (iter.hasNext())
-		{
-			Object object = iter.next();
-			builder.append(encodeValue(rootData, object, tabDepth));
-
-			if (iter.hasNext())
-			{
-				builder.append(", ");
-				if (breakArrays)
-				{
-					builder.append('\n');
-					builder.append("\t".repeat(tabDepth));
-				}
-			}
-		}
-
-		if (breakArrays && !array.isEmpty())
-		{
-			builder.append('\n');
-			builder.append("\t".repeat(tabDepth - 1));
-		}
-
-		builder.append(TABLE_HEADER_END);
-
-		return builder.toString();
+		return maxKeyLength;
 	}
 
 	//
@@ -380,146 +180,21 @@ public class LilacEncoder implements TomlEncoder
 	public LilacEncoder setBreakArrays(
 		boolean breakArrays
 	) {
-		this.breakArrays = breakArrays;
+		this.settings.breakArrays = breakArrays;
 		return this;
 	}
 
 	public LilacEncoder setAlignValues(
 		boolean alignValues
 	) {
-		this.alignEquals = alignValues;
+		this.settings.alignEquals = alignValues;
 		return this;
 	}
 
 	public LilacEncoder setAddNewlineBeforeTables(
 		boolean addNewline
 	) {
-		this.newlineTables = addNewline;
+		this.settings.newlineTables = addNewline;
 		return this;
-	}
-
-	//
-	// Utility
-	//
-	
-	private static final Pattern BARE_KEY_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
-
-	private static String sanitizeKey(
-		String key
-	) {
-		if (key.length() == 0)
-		{
-			return "\"\"";
-		}
-
-		if (!BARE_KEY_PATTERN.matcher(key).matches() || key.startsWith("-") || Character.isDigit(key.charAt(0)))
-		{
-			key = key.replace("\n", "\\n")
-				.replace("\b", "\\b")
-				.replace("\t", "\\t")
-				.replace("\n", "\\n")
-				.replace("\f", "\\f");
-
-			if (key.contains("\""))
-			{
-				return "'" + key + "'";
-			}
-			
-			return "\"" + key.replace("\n", "\\n") + "\"";
-		}
-		
-		return key;
-	}
-
-	private static boolean containsControlCharacter(
-		String string
-	) {
-		for (char c : string.toCharArray())
-		{
-			if (c == '\n')
-			{
-				continue;
-			}
-
-			if (Character.getType((int) c) == Character.CONTROL)
-			{
-				return true;
-			}
-
-			switch (c)
-			{
-				case '\'' -> { return true; }
-				case '"' -> { return true; }
-				default -> { continue; }
-			}
-		}
-
-		return false;
-	}
-
-	private static String escapeControlCharacters(
-		String string
-	) {
-		StringBuilder builder = new StringBuilder();
-
-		boolean isEscaped = false;
-		for (char c : string.toCharArray())
-		{
-			switch (c)
-			{
-				case '\b' -> builder.append("\\b"); // Backspace
-				case '\t' -> builder.append("\\t"); // Tab
-				case '\f' -> builder.append("\\f");
-				case '\r' -> builder.append("\\r"); 
-				case '\0' -> builder.append("\\u0000");
-				case '\u001B' -> builder.append("\\e");
-				case '\u007F' -> builder.append("\\u007F");
-				case '\u001F' -> builder.append("\\u001F");
-				case '"' -> {
-					if (isEscaped)
-					{
-						builder.append('"');
-						isEscaped = false;
-						continue;
-					}
-
-					builder.append("\\\"");
-				}
-				case '\\' -> {
-					if (isEscaped)
-					{
-						builder.append("\\\\");
-						isEscaped = false;
-						continue;
-					}
-					isEscaped = true;
-					continue;
-				}
-				default -> builder.append(c);
-			}
-
-			isEscaped = false;
-		}
-
-		return builder.toString();
-	}
-
-
-	private static String keysToString(
-		Deque<String> keys
-	) {
-		if (keys.isEmpty())
-		{
-			return "";
-		}
-
-		StringBuilder builder = new StringBuilder();
-		for (String key : keys.reversed())
-		{
-			builder.append(sanitizeKey(key));
-			builder.append(KEY_SEPARATOR);
-		}
-
-		return builder.substring(0, builder.length() - 1);
 	}
 }

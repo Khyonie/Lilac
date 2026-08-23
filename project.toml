@@ -6,15 +6,18 @@ natures = [ "eclipse", "maven" ]
 
 [dependencies]
 gson = { type = "fetchFromMaven", group_id = "com.google.code.gson", artifact_id = "gson" }
+junit = { type = "fetchFromMaven", group_id = "org.junit.platform", artifact_id = "junit-platform-console-standalone" }
 
 [configuration.main]
 sources = [ "src/main/", "src/api/" ]
 targets = [ "targets/{configuration}/{project_name}-{version}-{configuration}.jar" ]
-java_version = 14
+java_version = 16
 
 [configuration.testing]
-sources = [ "src/testing/" ]
-dependencies = [ "gson" ]
-targets = [ "{project_name}-{version}-{configuration}.jar" ]
-entry = "coffee.khyonieheart.lilac.SmallTestApp"
 inherit = "main"
+dependencies = [ { name = "gson", scope = "test" }, { name = "junit", scope = "test" } ]
+
+[configuration.testing.test]
+sources = [ "src/test/" ]
+runner = "junit"
+launcher = "junit"

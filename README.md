@@ -1,5 +1,5 @@
 # Lilac
-Lilac is a high-performance TOML configuration encoder and decoder for Java, with user configurations as the primary goal. 
+Lilac is a high-performance TOML configuration encoder and decoder for Java, with user configurations as the primary goal.
 
 ## Usage
 ### Decoding
@@ -25,10 +25,10 @@ String tomlConfiguration = encoder.encode(configuration);
 ---
 ## Compliance and testing
 Lilac is tested using [BurntSushi's toml-test suite](https://github.com/toml-lang/toml-test), and tests both v1.0 and v1.1 TOML specification versions.
+Wisteria is the testing entry point and launches the JUnit suite from `src/test`.
 To run the tests yourself:
-1) Clone and build the project with the "test" folder added as a source.
-2) Copy the toml-test's "tests" folder into the project directory.
-3) Run:
+1. Copy the toml-test `tests` folder into the project directory.
+2. Run:
 ```
-$ java -jar Lilac-<version>-testing.jar <(scope) | all> <valid | invalid | all> <v1_0_0 | v1_1_0>
+$ wisteria test
 ```

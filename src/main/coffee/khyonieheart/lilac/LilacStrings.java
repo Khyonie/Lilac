@@ -82,8 +82,8 @@ public class LilacStrings
 					case 'f' -> builder.append('\f');
 					case '\\' -> builder.append(current);
 					case 'b' -> builder.append('\b');
-					case 'U' -> { // UTF-24
-						long codepoint = readUTFCodepoint(document, 8);
+						case 'U' -> { // UTF-32
+							long codepoint = readUTFCodepoint(document, 8);
 
 						if (codepoint >= '\uD800' && codepoint <= '\uDFFF')
 						{
@@ -95,10 +95,9 @@ public class LilacStrings
 							throw TomlSyntaxException.of("Out-of-range unicode literal", document.hold(9));
 						}
 
-						current = document.getCharAtPointer();
-						builder.append((char) codepoint);
-						continue;
-					}
+							builder.appendCodePoint(Math.toIntExact(codepoint));
+							continue;
+						}
 					case 'u' -> { // UTF-16
 						long codepoint = readUTFCodepoint(document, 4);
 
@@ -107,10 +106,9 @@ public class LilacStrings
 							throw TomlSyntaxException.of("Unicode surrogates cannot be used in unicode characters", document.hold(5));
 						}
 
-						current = document.getCharAtPointer();
-						builder.append((char) codepoint);
-						continue;
-					}
+							builder.appendCodePoint(Math.toIntExact(codepoint));
+							continue;
+						}
 					case 'x' -> { // UTF-8 hex
 						if (decoder.getVersion() != TomlVersion.V1_1_0)
 						{
@@ -119,10 +117,9 @@ public class LilacStrings
 
 						long codepoint = readUTFCodepoint(document, 2);
 
-						current = document.getCharAtPointer();
-						builder.append((char) codepoint);
-						continue;
-					}
+							builder.appendCodePoint(Math.toIntExact(codepoint));
+							continue;
+						}
 					default -> throw TomlSyntaxException.of("Unrecognized escape sequence \"\\" + current + "\"", document.hold().hold());
 				}
 
