@@ -8,10 +8,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 class TomlValueEncoder
 {
@@ -32,7 +30,7 @@ class TomlValueEncoder
 	) {
 		if (object == null)
 		{
-			throw new IllegalArgumentException("TOML does not support null values");
+			return skipOrThrow("TOML does not support null values");
 		}
 
 		if (object instanceof Map)
@@ -48,6 +46,16 @@ class TomlValueEncoder
 		if (object instanceof String)
 		{
 			return TomlStringEncoder.encode((String) object);
+		}
+
+		if (object instanceof Boolean)
+		{
+			return object.toString();
+		}
+
+		if (object instanceof Byte || object instanceof Short || object instanceof Integer || object instanceof Long)
+		{
+			return TomlNumberEncoder.encode(((Number) object).longValue());
 		}
 
 		if (object instanceof Float)
@@ -80,7 +88,7 @@ class TomlValueEncoder
 			return TomlTemporalEncoder.encode((LocalTime) object);
 		}
 
-		return object.toString();
+		return skipOrThrow("Object of type " + object.getClass().getName() + " cannot be encoded as TOML");
 	}
 
 	private String encodeTableInline(
@@ -91,18 +99,22 @@ class TomlValueEncoder
 		StringBuilder builder = new StringBuilder();
 		builder.append('{');
 
-		Iterator<Entry<String, Object>> entryIter = table.entrySet().iterator();
-		while (entryIter.hasNext())
+		for (Map.Entry<String, Object> entry : table.entrySet())
 		{
-			Entry<String, Object> entry = entryIter.next();
-			builder.append(TomlKeyEncoder.sanitizeKey(entry.getKey()))
-				.append(" = ")
-				.append(encode(rootData, entry.getValue(), tabDepth + 1));
+			String value = encode(rootData, entry.getValue(), tabDepth + 1);
+			if (value == null)
+			{
+				continue;
+			}
 
-			if (entryIter.hasNext())
+			if (builder.length() > 1)
 			{
 				builder.append(", ");
 			}
+
+			builder.append(TomlKeyEncoder.sanitizeKey(entry.getKey()))
+				.append(" = ")
+				.append(value);
 		}
 
 		builder.append('}');
@@ -118,18 +130,16 @@ class TomlValueEncoder
 		StringBuilder builder = new StringBuilder();
 		builder.append('[');
 
-		if (settings.breakArrays && !array.isEmpty())
+		boolean wroteValue = false;
+		for (Object element : array)
 		{
-			builder.append('\n')
-				.append("\t".repeat(tabDepth));
-		}
+			String value = encode(rootData, element, tabDepth);
+			if (value == null)
+			{
+				continue;
+			}
 
-		Iterator<Object> iter = array.iterator();
-		while (iter.hasNext())
-		{
-			builder.append(encode(rootData, iter.next(), tabDepth));
-
-			if (iter.hasNext())
+			if (wroteValue)
 			{
 				builder.append(", ");
 				if (settings.breakArrays)
@@ -137,10 +147,16 @@ class TomlValueEncoder
 					builder.append('\n')
 						.append("\t".repeat(tabDepth));
 				}
+			} else if (settings.breakArrays) {
+				builder.append('\n')
+					.append("\t".repeat(tabDepth));
 			}
+
+			builder.append(value);
+			wroteValue = true;
 		}
 
-		if (settings.breakArrays && !array.isEmpty())
+		if (settings.breakArrays && wroteValue)
 		{
 			builder.append('\n')
 				.append("\t".repeat(tabDepth - 1));
@@ -149,5 +165,16 @@ class TomlValueEncoder
 		builder.append(']');
 
 		return builder.toString();
+	}
+
+	private String skipOrThrow(
+		String message
+	) {
+		if (settings.skipNonTomlObjects)
+		{
+			return null;
+		}
+
+		throw new IllegalArgumentException(message);
 	}
 }

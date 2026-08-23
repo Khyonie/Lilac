@@ -9,4 +9,5 @@ class TomlEncoderSettings
 	boolean alignEquals = false;
 	boolean breakArrays = false;
 	boolean newlineTables = true;
+	boolean skipNonTomlObjects = false;
 }

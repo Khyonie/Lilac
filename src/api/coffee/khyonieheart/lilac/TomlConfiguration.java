@@ -8,12 +8,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Convenience type which takes a loaded TOML map and allows for values to be referenced using TOML keys.
@@ -28,83 +27,31 @@ import java.util.Objects;
  */
 public class TomlConfiguration
 {
-	private final Map<String, Object> data;
-	private Map<List<String>, Object> cache = new HashMap<>();
+	private final TomlConfigurationLookup lookup;
 
 	public TomlConfiguration(
 		Map<String, Object> data
 	) {
-		this.data = Objects.requireNonNull(data);
+		this.lookup = new TomlConfigurationLookup(data);
 	}
 
-	@SuppressWarnings("unchecked")
+	public boolean contains(
+		String fullyQualifiedKey
+	) {
+		try {
+			this.get(fullyQualifiedKey, true);
+		} catch (NoSuchElementException | ClassCastException e) {
+			return false;
+		}
+
+		return true;
+	}
+
 	private Object get(
 		String fullyQualifiedKey,
 		boolean throwException
 	) {
-		String[] keys = TomlUtilities.fullyQualifiedKeyToArray(fullyQualifiedKey);
-
-		List<String> cacheKey = List.of(keys);
-
-		if (cache.containsKey(cacheKey))
-		{
-			Object value = cache.get(cacheKey);
-			if (value == null && throwException)
-			{
-				throw new NoSuchElementException("No such key \"" + fullyQualifiedKey + "\" in TOML configuration");
-			}
-			return cache.get(cacheKey);
-		}
-		
-		// Otherwise lookup value iteratively
-		Map<String, Object> targetMap = data;
-		for (int i = 0; i < keys.length - 1; i++)
-		{
-			Object value = targetMap.get(keys[i]);
-			if (value == null)
-			{
-				if (throwException)
-				{
-					throw new NoSuchElementException("No such value \"" + keys[i] + "\" of \"" + fullyQualifiedKey + "\" in TOML configuration");
-				}
-
-				return null;
-			}
-
-			if (!(value instanceof Map))
-			{
-				if (throwException)
-				{
-					throw new ClassCastException("Value at key \"" + keys[i] + "\" is of type " + value.getClass() + ", not a map");
-				}
-
-				return null;
-			}
-
-			targetMap = (Map<String, Object>) value;
-		}
-
-		Object value = targetMap.get(keys[keys.length - 1]);
-
-		if (value == null && throwException)
-		{
-			throw new NoSuchElementException("No such value \"" + keys[keys.length - 1] + "\" of \"" + fullyQualifiedKey + "\" in TOML configuration");
-		}
-
-		// Collection values must be read-only
-		if (value instanceof Map)
-		{
-			value = Collections.unmodifiableMap((Map<String, Object>) value);
-		}
-
-		if (value instanceof List)
-		{
-			value = Collections.unmodifiableList((List<Object>) value);
-		}
-
-		// Cache and return
-		cache.put(cacheKey, value);
-		return value;
+		return lookup.get(fullyQualifiedKey, throwException);
 	}
 
 	private <T> T getWithCast(
@@ -280,5 +227,75 @@ public class TomlConfiguration
 		String fullyQualifiedKey
 	) {
 		return this.getWithCast(fullyQualifiedKey, false, Map.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getOr(
+		String fullyQualifiedKey,
+		T fallback
+	) {
+		if (fallback != null)
+		{
+			return this.getOr(fullyQualifiedKey, fallbackType(fallback), fallback);
+		}
+
+		Object value = this.get(fullyQualifiedKey, false);
+		return value != null
+			? (T) value
+			: null;
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> Class<T> fallbackType(
+		T fallback
+	) {
+		if (fallback instanceof Map)
+		{
+			return (Class<T>) Map.class;
+		}
+
+		if (fallback instanceof List)
+		{
+			return (Class<T>) List.class;
+		}
+
+		return (Class<T>) fallback.getClass();
+	}
+
+	public <T> T getOr(
+		String fullyQualifiedKey,
+		Class<T> type,
+		T fallback
+	) {
+		T value = this.getWithCast(fullyQualifiedKey, false, Objects.requireNonNull(type));
+		return value != null
+			? value
+			: fallback;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T getOrElse(
+		String fullyQualifiedKey,
+		Supplier<T> fallback
+	) {
+		Objects.requireNonNull(fallback);
+
+		T value = (T) this.get(fullyQualifiedKey, false);
+		return value != null
+			? value
+			: fallback.get();
+	}
+
+	public <T> T getOrElse(
+		String fullyQualifiedKey,
+		Class<T> type,
+		Supplier<? extends T> fallback
+	) {
+		Objects.requireNonNull(fallback);
+
+		T value = this.getWithCast(fullyQualifiedKey, false, Objects.requireNonNull(type));
+		return value != null
+			? value
+			: fallback.get();
 	}
 }

@@ -10,6 +10,12 @@ final class TomlNumberEncoder
 	{}
 
 	static String encode(
+		long i64
+	) {
+		return Long.toString(i64);
+	}
+
+	static String encode(
 		float f32
 	) {
 		if (f32 == Float.POSITIVE_INFINITY)

@@ -28,7 +28,6 @@ public class LilacEncoder implements TomlEncoder
 		return builder.toString();
 	}
 
-	@SuppressWarnings("unchecked")
 	private void encode(
 		Map<String, Object> rootData,
 		Map<String, Object> data,
@@ -89,6 +88,12 @@ public class LilacEncoder implements TomlEncoder
 		StringBuilder builder
 	) {
 		String key = entry.getKey();
+		String value = values.encode(rootData, entry.getValue(), 0);
+		if (value == null)
+		{
+			return;
+		}
+
 		builder.append(TomlKeyEncoder.sanitizeKey(key));
 
 		if (settings.alignEquals)
@@ -97,7 +102,7 @@ public class LilacEncoder implements TomlEncoder
 		}
 
 		builder.append(" = ")
-			.append(values.encode(rootData, entry.getValue(), 0))
+			.append(value)
 			.append('\n');
 	}
 
@@ -195,6 +200,13 @@ public class LilacEncoder implements TomlEncoder
 		boolean addNewline
 	) {
 		this.settings.newlineTables = addNewline;
+		return this;
+	}
+
+	public LilacEncoder setSkipNonTomlTypes(
+		boolean skipNonTomlTypes
+	) {
+		this.settings.skipNonTomlObjects = skipNonTomlTypes;
 		return this;
 	}
 }
