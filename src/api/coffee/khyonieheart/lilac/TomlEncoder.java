@@ -6,6 +6,9 @@ package coffee.khyonieheart.lilac;
 
 import java.util.Map;
 
+/**
+ * Encoder for writing Java data structures as TOML source text.
+ */
 public interface TomlEncoder
 {
 	/**

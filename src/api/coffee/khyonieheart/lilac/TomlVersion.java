@@ -4,6 +4,9 @@
  */ 
 package coffee.khyonieheart.lilac;
 
+/**
+ * TOML specification versions supported by Lilac.
+ */
 public enum TomlVersion
 {
 	/** TOML specification v1.0 */

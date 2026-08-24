@@ -1,7 +1,9 @@
 package coffee.khyonieheart.lilac;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -57,6 +59,48 @@ class TomlConfigurationTest
 		assertTrue(missingFallbackCalled.get());
 	}
 
+	@Test
+	void nullablePrimitiveGettersReturnNullForMissingValues()
+	{
+		TomlConfiguration configuration = configuration();
+
+		assertEquals(Long.valueOf(8080L), configuration.getLongOrNull("server.port"));
+		assertEquals(Integer.valueOf(8080), configuration.getIntegerOrNull("server.port"));
+		assertEquals(Float.valueOf(1.5f), configuration.getFloatOrNull("ratio"));
+		assertEquals(Boolean.TRUE, configuration.getBooleanOrNull("enabled"));
+		assertNull(configuration.getLongOrNull("server.missing"));
+		assertNull(configuration.getIntegerOrNull("server.missing"));
+		assertNull(configuration.getFloatOrNull("server.missing"));
+		assertNull(configuration.getBooleanOrNull("server.missing"));
+	}
+
+	@Test
+	void fullyQualifiedKeysRejectInvalidBareKeyCharacters()
+	{
+		assertThrows(IllegalArgumentException.class, () -> TomlUtilities.fullyQualifiedKeyToArray("server/path"));
+	}
+
+	@Test
+	void fullyQualifiedKeysRejectEmptySegments()
+	{
+		assertThrows(IllegalArgumentException.class, () -> TomlUtilities.fullyQualifiedKeyToArray(""));
+		assertThrows(IllegalArgumentException.class, () -> TomlUtilities.fullyQualifiedKeyToArray("   "));
+		assertThrows(IllegalArgumentException.class, () -> TomlUtilities.fullyQualifiedKeyToArray(".server"));
+		assertThrows(IllegalArgumentException.class, () -> TomlUtilities.fullyQualifiedKeyToArray("server."));
+		assertThrows(IllegalArgumentException.class, () -> TomlUtilities.fullyQualifiedKeyToArray("server..host"));
+	}
+
+	@Test
+	void fullyQualifiedKeysSupportEscapedUnicodeCodepoints()
+	{
+		String emoji = new String(Character.toChars(0x1F600));
+
+		assertArrayEquals(
+			new String[] { "emoji" + emoji },
+			TomlUtilities.fullyQualifiedKeyToArray("\"emoji\\U0001F600\"")
+		);
+	}
+
 	private TomlConfiguration configuration()
 	{
 		Map<String, Object> server = new LinkedHashMap<>();
@@ -65,6 +109,7 @@ class TomlConfigurationTest
 
 		Map<String, Object> data = new LinkedHashMap<>();
 		data.put("enabled", true);
+		data.put("ratio", 1.5f);
 		data.put("server", server);
 
 		return new TomlConfiguration(data);

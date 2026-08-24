@@ -7,10 +7,14 @@ package coffee.khyonieheart.lilac;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+/**
+ * Decoder for reading TOML source text into Java data structures.
+ */
 public interface TomlDecoder
 {
 	/**
@@ -54,11 +58,93 @@ public interface TomlDecoder
 	 */
 	public default Map<String, Object> decode(
 		File file
-	) throws 
-		IOException
+	) throws IOException
 	{
 		Objects.requireNonNull(file);
-		return this.decode(Files.readString(file.toPath()));
+		return this.decode(file.toPath());
+	}
+
+	/**
+	 * Loads the contents of the given path as a TOML document and reads it into an ordered map.
+	 *
+	 * @param path A path containing a TOML document
+	 *
+	 * @return A map representing the given document.
+	 * @throws TomlSyntaxException Thrown if the document is invalid.
+	 * @throws TomlRedefineKeyException Thrown if document contains any duplicate keys.
+	 * @throws IOException Thrown if path cannot be read.
+	 */
+	public default Map<String, Object> decode(
+		Path path
+	) throws IOException
+	{
+		Objects.requireNonNull(path);
+		return this.decode(Files.readString(path));
+	}
+
+	/**
+	 * Reads a TOML document into a configuration wrapper.
+	 *
+	 * @param document Document to read
+	 *
+	 * @return A configuration wrapper around the decoded document.
+	 * @throws TomlSyntaxException Thrown if the document is invalid.
+	 * @throws TomlRedefineKeyException Thrown if document contains any duplicate keys.
+	 */
+	public default TomlConfiguration decodeConfiguration(
+		Document document
+	) {
+		return new TomlConfiguration(this.decode(Objects.requireNonNull(document)));
+	}
+
+	/**
+	 * Reads a TOML document into a configuration wrapper.
+	 *
+	 * @param document Document to read
+	 *
+	 * @return A configuration wrapper around the decoded document.
+	 * @throws TomlSyntaxException Thrown if the document is invalid.
+	 * @throws TomlRedefineKeyException Thrown if document contains any duplicate keys.
+	 */
+	public default TomlConfiguration decodeConfiguration(
+		String document
+	) {
+		return this.decodeConfiguration(new Document(Objects.requireNonNull(document)));
+	}
+
+	/**
+	 * Loads the contents of the given file as a TOML document and reads it into a configuration wrapper.
+	 *
+	 * @param file A file containing a TOML document
+	 *
+	 * @return A configuration wrapper around the decoded document.
+	 * @throws TomlSyntaxException Thrown if the document is invalid.
+	 * @throws TomlRedefineKeyException Thrown if document contains any duplicate keys.
+	 * @throws IOException Thrown if file cannot be read.
+	 */
+	public default TomlConfiguration decodeConfiguration(
+		File file
+	) throws IOException
+	{
+		Objects.requireNonNull(file);
+		return this.decodeConfiguration(file.toPath());
+	}
+
+	/**
+	 * Loads the contents of the given path as a TOML document and reads it into a configuration wrapper.
+	 *
+	 * @param path A path containing a TOML document
+	 *
+	 * @return A configuration wrapper around the decoded document.
+	 * @throws TomlSyntaxException Thrown if the document is invalid.
+	 * @throws TomlRedefineKeyException Thrown if document contains any duplicate keys.
+	 * @throws IOException Thrown if path cannot be read.
+	 */
+	public default TomlConfiguration decodeConfiguration(
+		Path path
+	) throws IOException
+	{
+		return this.decodeConfiguration(Files.readString(Objects.requireNonNull(path)));
 	}
 
 	/**

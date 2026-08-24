@@ -4,6 +4,9 @@
  */ 
 package coffee.khyonieheart.lilac;
 
+/**
+ * Non-fatal parser warnings that can be enabled, disabled, or sent to a warning handler.
+ */
 public enum TomlWarning
 {
 	/** Supertables don't need to be explicitly defined. */

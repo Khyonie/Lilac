@@ -13,11 +13,17 @@ import coffee.khyonieheart.lilac.configuration.ArrayTypeContext;
 import coffee.khyonieheart.lilac.configuration.TableTypeContext;
 import coffee.khyonieheart.lilac.configuration.TomlLinkedHashMap;
 
+/**
+ * Default TOML encoder implementation.
+ */
 public class LilacEncoder implements TomlEncoder
 {
 	private final TomlEncoderSettings settings = new TomlEncoderSettings();
 	private final TomlValueEncoder values = new TomlValueEncoder(settings);
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public String encode(
 		Map<String, Object> data
@@ -181,7 +187,14 @@ public class LilacEncoder implements TomlEncoder
 	//
 	// Settings
 	//
-	
+
+	/**
+	 * Sets whether arrays should be written across multiple lines.
+	 *
+	 * @param breakArrays Whether arrays should be written across multiple lines.
+	 *
+	 * @return This encoder instance.
+	 */
 	public LilacEncoder setBreakArrays(
 		boolean breakArrays
 	) {
@@ -189,6 +202,13 @@ public class LilacEncoder implements TomlEncoder
 		return this;
 	}
 
+	/**
+	 * Sets whether values should be aligned by padding keys before equals signs.
+	 *
+	 * @param alignValues Whether values should be aligned.
+	 *
+	 * @return This encoder instance.
+	 */
 	public LilacEncoder setAlignValues(
 		boolean alignValues
 	) {
@@ -196,6 +216,13 @@ public class LilacEncoder implements TomlEncoder
 		return this;
 	}
 
+	/**
+	 * Sets whether table headers should be preceded by a blank line.
+	 *
+	 * @param addNewline Whether table headers should be preceded by a blank line.
+	 *
+	 * @return This encoder instance.
+	 */
 	public LilacEncoder setAddNewlineBeforeTables(
 		boolean addNewline
 	) {
@@ -203,6 +230,13 @@ public class LilacEncoder implements TomlEncoder
 		return this;
 	}
 
+	/**
+	 * Sets whether unsupported Java values should be skipped instead of rejected.
+	 *
+	 * @param skipNonTomlTypes Whether unsupported Java values should be skipped.
+	 *
+	 * @return This encoder instance.
+	 */
 	public LilacEncoder setSkipNonTomlTypes(
 		boolean skipNonTomlTypes
 	) {

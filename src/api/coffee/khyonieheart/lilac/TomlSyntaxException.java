@@ -9,8 +9,19 @@ import java.util.List;
 
 import coffee.khyonieheart.lilac.symbol.Symbol;
 
+/**
+ * Exception thrown when TOML source text cannot be parsed.
+ */
 public class TomlSyntaxException extends RuntimeException
 {
+	/**
+	 * Creates a syntax exception at the current document pointer.
+	 *
+	 * @param message Syntax error message.
+	 * @param document Document being parsed.
+	 *
+	 * @return A syntax exception with source context.
+	 */
 	public static TomlSyntaxException of(
 		String message,
 		Document document
@@ -18,6 +29,15 @@ public class TomlSyntaxException extends RuntimeException
 		return of(message, document.getDocument(), document.getPointer());
 	}
 
+	/**
+	 * Creates a syntax exception at a parsed symbol's source position.
+	 *
+	 * @param message Syntax error message.
+	 * @param document Source text being parsed.
+	 * @param symbol Symbol whose source position should be reported.
+	 *
+	 * @return A syntax exception with source context.
+	 */
 	public static TomlSyntaxException of(
 		String message,
 		String document,
@@ -26,6 +46,15 @@ public class TomlSyntaxException extends RuntimeException
 		return of(message, document, symbol.getPosition());
 	}
 
+	/**
+	 * Creates a syntax exception with a cause at the current document pointer.
+	 *
+	 * @param message Syntax error message.
+	 * @param document Document being parsed.
+	 * @param cause Underlying cause.
+	 *
+	 * @return A syntax exception with source context.
+	 */
 	public static TomlSyntaxException of(
 		String message,
 		Document document,
@@ -34,6 +63,16 @@ public class TomlSyntaxException extends RuntimeException
 		return of(message, document.getDocument(), document.getPointer(), cause);
 	}
 
+	/**
+	 * Creates a syntax exception with a cause at a parsed symbol's source position.
+	 *
+	 * @param message Syntax error message.
+	 * @param document Source text being parsed.
+	 * @param symbol Symbol whose source position should be reported.
+	 * @param cause Underlying cause.
+	 *
+	 * @return A syntax exception with source context.
+	 */
 	public static TomlSyntaxException of(
 		String message,
 		String document,

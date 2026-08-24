@@ -5,41 +5,74 @@ import java.util.Deque;
 
 class TomlUtilities
 {
+	/**
+	 * Splits a TOML fully-qualified key into its parsed key segments.
+	 *
+	 * @param fullyQualifiedKey Fully-qualified TOML key.
+	 *
+	 * @return Parsed key segments in lookup order.
+	 * @throws IllegalArgumentException Thrown if the key is not syntactically valid.
+	 */
 	public static String[] fullyQualifiedKeyToArray(
 		String fullyQualifiedKey
 	) {
 		int[] pointer = new int[] { 0 };
 		Deque<String> keys = new ArrayDeque<>();
+		boolean sawKey = false;
+		boolean expectKey = true;
 		while (pointer[0] < fullyQualifiedKey.length())
 		{
 			skipThroughWhitespace(fullyQualifiedKey, pointer);
-			switch (fullyQualifiedKey.charAt(pointer[0]))
+			if (pointer[0] >= fullyQualifiedKey.length())
+			{
+				break;
+			}
+
+			char current = fullyQualifiedKey.charAt(pointer[0]);
+			if (current == '.')
+			{
+				if (expectKey || !sawKey)
+				{
+					throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". A key separator must follow a key.");
+				}
+
+				pointer[0]++;
+				expectKey = true;
+				continue;
+			}
+
+			if (!expectKey)
+			{
+				throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". Expected a key separator.");
+			}
+
+			switch (current)
 			{
 				case '\'' -> keys.push(parseLiteralKey(fullyQualifiedKey, pointer));
 				case '"' -> keys.push(parseQuotedKey(fullyQualifiedKey, pointer));
 				default -> {
-					char current = fullyQualifiedKey.charAt(pointer[0]);
-
-					if (current == '.')
-					{
-						if (pointer[0] == 0)
-						{
-							throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". A key separator may not be the start of a key.");
-						} 
-
-						pointer[0]++;
-						continue;
-					}
-
 					if ((current >= '0' && current <= '9') || (current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z') || current == '-' || current == '_')
 					{
 						keys.push(parseBareKey(fullyQualifiedKey, pointer));
-						continue;
+						break;
 					}
 
 					throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\", a key must start with an alphanumeric character, a dash, an underscore, a quotation mark, or an apostrophe (a-zA-Z0-9_-'\")");
 				}
 			}
+
+			sawKey = true;
+			expectKey = false;
+		}
+
+		if (!sawKey)
+		{
+			throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". A key must not be empty.");
+		}
+
+		if (expectKey)
+		{
+			throw new IllegalArgumentException("Invalid key \"" + fullyQualifiedKey + "\". A key separator must be followed by a key.");
 		}
 
 		String[] keysArray = new String[keys.size()];
@@ -71,7 +104,7 @@ class TomlUtilities
 				break;
 			}
 			
-			if ((currentChar >= 'a' && currentChar <= 'z') || (currentChar >= 'A' && currentChar <= 'Z') || (currentChar >= 0 && currentChar <= '9') || currentChar == '_' || currentChar == '-')
+			if ((currentChar >= 'a' && currentChar <= 'z') || (currentChar >= 'A' && currentChar <= 'Z') || (currentChar >= '0' && currentChar <= '9') || currentChar == '_' || currentChar == '-')
 			{
 				builder.append(currentChar);
 				pointer[0]++;
@@ -139,7 +172,7 @@ class TomlUtilities
 					case 'f' -> builder.append('\f');
 					case '\\' -> builder.append(current);
 					case 'b' -> builder.append('\b');
-					case 'U' -> { // UTF-24
+					case 'U' -> { // UTF-32
 						long codepoint = readUTFCodepoint(fullyQualifiedKey, pointer, 8);
 
 						if (codepoint >= '\uD800' && codepoint <= '\uDFFF')
@@ -152,8 +185,7 @@ class TomlUtilities
 							throw new IllegalArgumentException("Out-of-range unicode literal");
 						}
 
-						current = fullyQualifiedKey.charAt(pointer[0]);
-						builder.append((char) codepoint);
+						builder.appendCodePoint((int) codepoint);
 						continue;
 					}
 					case 'u' -> { // UTF-16
@@ -164,8 +196,7 @@ class TomlUtilities
 							throw new IllegalStateException("Unicode surrogates cannot be used as a codepoint");
 						}
 
-						current = fullyQualifiedKey.charAt(pointer[0]);
-						builder.append((char) codepoint);
+						builder.appendCodePoint((int) codepoint);
 						continue;
 					}
 					default -> throw new IllegalArgumentException("Unrecognized escape sequence \"\\" + current + "\"");

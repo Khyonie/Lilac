@@ -15,6 +15,9 @@ import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.TomlEndOfDocument;
 import coffee.khyonieheart.lilac.symbol.TomlStartOfDocument;
 
+/**
+ * Default TOML decoder implementation.
+ */
 public class LilacDecoder implements TomlDecoder
 {
 	private Deque<ParserContext> context = new ArrayDeque<>();
@@ -22,6 +25,11 @@ public class LilacDecoder implements TomlDecoder
 	private BiConsumer<TomlWarning, String> warningHandler = null;
 	private TomlVersion version;
 
+	/**
+	 * Creates a decoder for the given TOML specification version.
+	 *
+	 * @param version TOML specification version to follow while decoding.
+	 */
 	public LilacDecoder(
 		TomlVersion version
 	) {
@@ -29,6 +37,9 @@ public class LilacDecoder implements TomlDecoder
 		this.enableWarnings(TomlWarning.values());
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Map<String, Object> decode(Document document) 
 	{
@@ -77,24 +88,36 @@ public class LilacDecoder implements TomlDecoder
 		throw TomlSyntaxException.of("Expected one of [ " + builder.toString() + " ], found \"" + document.getCharAtPointer() + "\"", document);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void addContext(ParserContext context) 
 	{
 		this.context.push(context);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public ParserContext getContext() 
 	{
 		return this.context.peek();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void removeContext() 
 	{
 		this.context.pop();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public TomlDecoder disableWarnings(TomlWarning... warnings) 
 	{
@@ -106,6 +129,9 @@ public class LilacDecoder implements TomlDecoder
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public TomlDecoder enableWarnings(TomlWarning... warnings) 
 	{
@@ -117,6 +143,9 @@ public class LilacDecoder implements TomlDecoder
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isWarningEnabled(TomlWarning warningType) 
 	{
@@ -125,6 +154,9 @@ public class LilacDecoder implements TomlDecoder
 		return this.warnings[warningType.ordinal()];
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public TomlDecoder setTomlVersion(TomlVersion version) 
 	{
@@ -133,12 +165,18 @@ public class LilacDecoder implements TomlDecoder
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public TomlVersion getVersion() 
 	{
 		return this.version;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public LilacDecoder setWarningHandler(BiConsumer<TomlWarning, String> handler) 
 	{
@@ -147,6 +185,9 @@ public class LilacDecoder implements TomlDecoder
 		return this;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void sendWarning(TomlWarning warning, String message) 
 	{
