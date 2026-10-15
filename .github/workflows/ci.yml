@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Lilac
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install Wisteria
+        run: cargo install --git https://github.com/Khyonie/Wisteria.git --rev a7988e3737a3b3e91fe005909862e16b20208034 --locked wisteria
+
+      - name: Check out TOML compliance fixtures
+        uses: actions/checkout@v4
+        with:
+          repository: toml-lang/toml-test
+          ref: a80ce8268cbcf5ea95f02b2e6d6cc38406ce28c9
+          path: toml-test
+          sparse-checkout: tests
+
+      - name: Prepare compliance fixtures
+        run: |
+          mv toml-test/tests tests
+          # Match the existing local test snapshot, which omits these two cases.
+          sed -i '/^valid\/key\/quoted-unicode\./d' tests/files-toml-1.0.0 tests/files-toml-1.1.0
+
+      - name: Fetch locked dependencies
+        run: wisteria fetch all
+
+      - name: Verify dependencies
+        run: wisteria verify
+
+      - name: Select test configuration
+        run: wisteria switch testing
+
+      - name: Run tests
+        run: wisteria test
+
+      - name: Select main configuration
+        run: wisteria switch main
+
+      - name: Build
+        run: wisteria build

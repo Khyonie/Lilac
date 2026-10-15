@@ -1,4 +1,6 @@
 # Lilac
+[![CI](https://github.com/khyonie/Lilac/actions/workflows/ci.yml/badge.svg)](https://github.com/khyonie/Lilac/actions/workflows/ci.yml)
+
 Lilac is a high-performance TOML configuration encoder and decoder for Java, with user configurations as the primary goal.
 
 ## Usage
