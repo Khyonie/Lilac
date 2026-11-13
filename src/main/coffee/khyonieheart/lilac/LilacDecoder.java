@@ -53,7 +53,8 @@ public class LilacDecoder implements TomlDecoder
 		{
 			symbols.push(new TomlEndOfDocument());
 		} else {
-			documentStart.tryParseRecursive(document, this, symbols);
+			//documentStart.tryParseRecursive(document, this, symbols);
+			Symbol.tryParseIterative(document, this, symbols);
 		}
 
 		if (symbols.peek().getClass() != TomlEndOfDocument.class)

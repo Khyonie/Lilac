@@ -111,7 +111,10 @@ public abstract class Symbol<T>
 	 * @param document Document being parsed.
 	 * @param decoder Decoder that owns parser state.
 	 * @param symbols Symbol stack being built by the scanner.
+	 *
+	 * @deprecated Recursive implementation causes {@code StackOverflowError} when parsing extremely large documents. Use {@link Symbol#tryParseIterative(Document, TomlDecoder, Deque)} instead.
 	 */
+	@Deprecated
 	public void tryParseRecursive(
 		Document document,
 		TomlDecoder decoder,
@@ -140,6 +143,50 @@ public abstract class Symbol<T>
 				symbol.tryParseRecursive(document, decoder, symbols);
 				break;
 			}
+		}
+	}
+
+	/**
+	 * Scans symbols from the current position in the document.
+	 *
+	 * @param document Document being parsed.
+	 * @param decoder Decoder that owns parser state.
+	 * @param symbols Symbol stack being built by the scanner.
+	 */
+	public static void tryParseIterative(
+		Document document,
+		TomlDecoder decoder,
+		Deque<Symbol<?>> symbols
+	) {
+		Objects.requireNonNull(document);
+		Objects.requireNonNull(decoder);
+		Objects.requireNonNull(symbols);
+
+		// Initial state
+		int position;
+		Collection<Class<? extends Symbol<?>>> nextSymbols;
+		Symbol<?> currentSymbol = new TomlStartOfDocument();
+
+		// Iterate over document by trying symbols one-by-one until one matches
+		documentLoop: while (!document.skipThroughWhitespace(symbols, decoder))
+		{
+			position = document.getPointer();
+			nextSymbols = currentSymbol.getNextSymbols(decoder);
+			for (Class<? extends Symbol<?>> symbolClass : nextSymbols)
+			{
+				Symbol<?> symbol = getSymbol(symbolClass);
+				if (!symbol.tryParse(document, decoder, symbols))
+				{
+					continue;
+				}
+
+				// Symbol matched, continue from there
+				symbol.setPosition(position);
+				currentSymbol = symbol;
+				continue documentLoop;
+			}
+
+			return;
 		}
 	}
 }
