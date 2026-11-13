@@ -26,7 +26,7 @@ import coffee.khyonieheart.lilac.symbol.time.TomlTime;
 
 public class TomlArraySeparator extends Symbol<String>
 {
-	private static final List<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArray.class, TomlEndArray.class, TomlStartInlineTable.class, TomlBoolean.class, TomlMultilineString.class, TomlMultilineLiteralString.class, TomlRegularString.class, TomlLiteralString.class, TomlOffsetDateTime.class, TomlDateTime.class, TomlDate.class, TomlTime.class, TomlDecimal.class, TomlFloat.class);
+	private static final List<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArray.class, TomlEndArray.class, TomlStartInlineTable.class, TomlBoolean.class, TomlMultilineString.class, TomlMultilineLiteralString.class, TomlRegularString.class, TomlLiteralString.class, TomlOffsetDateTime.class, TomlDateTime.class, TomlDate.class, TomlTime.class, TomlFloat.class, TomlDecimal.class);
 	private static final List<Class<? extends Symbol<?>>> INLINE_TABLE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class);
 	private static final List<Class<? extends Symbol<?>>> V1_1_INLINE_TABLE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndInlineTable.class);
 
