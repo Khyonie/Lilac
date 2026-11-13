@@ -23,12 +23,11 @@ public class TomlComment extends Symbol<String>
 	private static final Collection<Class<? extends Symbol<?>>> STANDARD_NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArrayTable.class, TomlStartTable.class, TomlArraySeparator.class, TomlEndInlineTable.class, TomlEndArray.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndOfDocument.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = LilacSymbols.build().add(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class).add(LilacSymbols.VALUE_SYMBOLS).create();
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != '#')
 		{
-			return false;
+			return null;
 		}
 
 		if (decoder.getContext() != null)
@@ -79,14 +78,15 @@ public class TomlComment extends Symbol<String>
 			builder.append(current);
 		}
 
-		this.comment = builder.toString();
-		symbols.push(this);
+		TomlComment symbol = new TomlComment();
+		symbol.comment = builder.toString();
+		symbols.push(symbol);
 
 		if (!document.hasNext())
 		{
 			symbols.push(new TomlEndOfDocument());
 		}
-		return true;
+		return symbol;
 	}
 
 	@Override

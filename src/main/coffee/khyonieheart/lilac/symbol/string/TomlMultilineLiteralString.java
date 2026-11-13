@@ -30,65 +30,70 @@ public class TomlMultilineLiteralString extends Symbol<String>
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 	private String value;
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		document.pinPointer();
-		for (int i = 0; i < 3; i++)
-		{
-			if (document.getCharAndIncrement() != '\'')
+		int pinDepth = document.getPinDepth();
+		try {
+			document.pinPointer();
+			for (int i = 0; i < 3; i++)
 			{
-				document.rewindToPin();
-				return false; 
-			}
-		}
-
-		StringBuilder builder = new StringBuilder();
-		if (document.getCharAtPointer() == '\n')
-		{
-			document.incrementPointer();
-		}
-
-		while (document.hasNext())
-		{
-			char current = document.getCharAndIncrement();
-
-			if (current == '\'')
-			{
-				int apostrophes = 1;
-				while (document.hasNext() && document.getCharAtPointer() == '\'')
+				if (document.getCharAndIncrement() != '\'')
 				{
-					apostrophes++;
-					document.incrementPointer();
+					document.rewindToPin();
+					return null;
+				}
+			}
 
-					if (apostrophes > 5)
+			StringBuilder builder = new StringBuilder();
+			if (document.getCharAtPointer() == '\n')
+			{
+				document.incrementPointer();
+			}
+
+			while (document.hasNext())
+			{
+				char current = document.getCharAndIncrement();
+
+				if (current == '\'')
+				{
+					int apostrophes = 1;
+					while (document.hasNext() && document.getCharAtPointer() == '\'')
 					{
-						throw TomlSyntaxException.of("Too many apostrophes in multi-line literal TOML string", document);
+						apostrophes++;
+						document.incrementPointer();
+
+						if (apostrophes > 5)
+						{
+							throw TomlSyntaxException.of("Too many apostrophes in multi-line literal TOML string", document);
+						}
 					}
+
+					if (apostrophes < 3)
+					{
+						builder.append("'".repeat(apostrophes));
+						continue;
+					}
+
+					builder.append("'".repeat(apostrophes - 3));
+					break;
 				}
 
-				if (apostrophes < 3)
+				if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
 				{
-					builder.append("'".repeat(apostrophes));
-					continue;
+					throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
 				}
 
-				builder.append("'".repeat(apostrophes - 3));
-				break;
+				builder.append(current);
 			}
 
-			if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
-			{
-				throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
-			}
+			TomlMultilineLiteralString symbol = new TomlMultilineLiteralString();
+			symbol.value = builder.toString();
 
-			builder.append(current);
+			symbols.push(symbol);
+			return symbol;
+		} finally {
+			document.discardPinsAfter(pinDepth);
 		}
-
-		value = builder.toString();
-
-		symbols.push(this);
-		return true;
 	}
 
 	@Override

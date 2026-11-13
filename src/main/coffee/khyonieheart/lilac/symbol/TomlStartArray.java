@@ -24,20 +24,20 @@ public class TomlStartArray extends Symbol<String>
 {
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArray.class, TomlEndArray.class, TomlStartInlineTable.class, TomlBoolean.class, TomlMultilineString.class, TomlMultilineLiteralString.class, TomlRegularString.class, TomlLiteralString.class, TomlOffsetDateTime.class, TomlDateTime.class, TomlDate.class, TomlTime.class, TomlFloat.class, TomlDecimal.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != '[')
 		{
-			return false;
+			return null;
 		}
 
 		document.incrementPointer();
 		document.skipToNextImportant();
 
-		symbols.push(this);
+		TomlStartArray symbol = new TomlStartArray();
+		symbols.push(symbol);
 		decoder.addContext(ParserContext.ARRAY);
-		return true;
+		return symbol;
 	}
 
 	@Override

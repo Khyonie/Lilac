@@ -15,21 +15,26 @@ public class TomlEndArrayTable extends Symbol<String>
 {
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = TomlStartOfDocument.NEXT_SYMBOLS;
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		document.pinPointer();
-		if (document.getCharAndIncrement() == ']')
-		{
+		int pinDepth = document.getPinDepth();
+		try {
+			document.pinPointer();
 			if (document.getCharAndIncrement() == ']')
 			{
-				symbols.push(this);
-				return true;
+				if (document.getCharAndIncrement() == ']')
+				{
+					TomlEndArrayTable symbol = new TomlEndArrayTable();
+					symbols.push(symbol);
+					return symbol;
+				}
 			}
-		}
 
-		document.rewindToPin();
-		return false;
+			document.rewindToPin();
+			return null;
+		} finally {
+			document.discardPinsAfter(pinDepth);
+		}
 	}
 
 	@Override

@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import coffee.khyonieheart.lilac.symbol.Symbol;
+import coffee.khyonieheart.lilac.symbol.SymbolFactory;
 import coffee.khyonieheart.lilac.symbol.TomlEndOfDocument;
 import coffee.khyonieheart.lilac.symbol.TomlStartOfDocument;
 
@@ -73,7 +74,7 @@ public class LilacDecoder implements TomlDecoder
 		Iterator<Class<? extends Symbol<?>>> iter = symbol.getNextSymbols(this).iterator();
 		while (iter.hasNext())
 		{
-			builder.append(Symbol.getSymbol(iter.next()).getClass().getSimpleName());
+			builder.append(SymbolFactory.getInstance(iter.next()).getClass().getSimpleName());
 
 			if (iter.hasNext())
 			{

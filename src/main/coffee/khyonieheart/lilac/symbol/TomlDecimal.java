@@ -31,134 +31,119 @@ public class TomlDecimal extends Symbol<Long>
 	private static final char POSITIVE_SIGN = '+';
 	private static final char NEGATIVE_SIGN = '-';
 	
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		char current = document.pinPointer().getCharAtPointer();
-		char prefix = NULL_PREFIX;
-		int numberBase = BASE_DECIMAL;
-
-		StringBuilder builder = new StringBuilder();
-
-		// Plus or minus sign
-		switch (current)
-		{
-			case POSITIVE_SIGN -> {
-				current = document.incrementPointer().getCharAtPointer();
-				prefix = POSITIVE_SIGN;
-			}
-			case NEGATIVE_SIGN -> {
-				current = document.incrementPointer().getCharAtPointer();
-				prefix = NEGATIVE_SIGN;
-			}
-		}
-
-		// Check for zero literal or base prefix
-		if (current == '0')
-		{
-			current = document.pinPointer()
-				.incrementPointer()
-				.getCharAtPointer();
-
-			// In case we're reading a float or time or something
-			if (current == '.' || current == '-' || current == ':')
+		int pinDepth = document.getPinDepth();
+		try {
+			char current = document.pinPointer().getCharAtPointer();
+			char prefix = NULL_PREFIX;
+			int numberBase = BASE_DECIMAL;
+			StringBuilder builder = new StringBuilder();
+			// Plus or minus sign
+			switch (current)
 			{
-				document.rewindToPin();
-				return false;
-			}
-			
-			// Valid endings for a zero literal
-			if (!document.hasNext() || current == ',' || current == ']' || current == '}' || Character.isWhitespace(current))
-			{
-				this.value = 0;
-				symbols.push(this);
-				return true;
-			}
-
-			// Valid base prefixes. As for why uppercase base prefixes aren't allowed, ask the cretins who made this specification. YAML allows it. YAML! **YAML!**
-			numberBase = switch (current) {
-				case 'x' -> BASE_HEXADECIMAL;
-				case 'o' -> BASE_OCTAL;
-				case 'b' -> BASE_BINARY;
-				default -> {
-					if (current >= '0' && current <= '9')
-					{
-						throw TomlSyntaxException.of("Leading zeroes are not allowed", document);
-					}
-
-					throw TomlSyntaxException.of("Illegal character in number literal, expected a base prefix [ 'x', 'o', 'b' ]", document);
+				case POSITIVE_SIGN -> {
+					current = document.incrementPointer().getCharAtPointer();
+					prefix = POSITIVE_SIGN;
 				}
-			};
-
-			if (prefix != NULL_PREFIX)
-			{
-				throw TomlSyntaxException.of("Numbers with a base prefix cannot be prefixed with '+' or '-'", document);
+				case NEGATIVE_SIGN -> {
+					current = document.incrementPointer().getCharAtPointer();
+					prefix = NEGATIVE_SIGN;
+				}
 			}
-
-			// Remove the pin
-			document.incrementPointer()
-				.removePin();
-		}
-
-		// Make sure the value starts with a valid number
-		if (!isValidWithinBase(document.getCharAtPointer(), numberBase))
-		{
-			//throw TomlSyntaxException.of("Illegal character '" + document.getCharAtPointer() + "' in number literal, expected any character valid for a base " + numberBase + " literal", document);
-			document.rewindToPin();
-			return false;
-		}
-
-		// Read number
-		while (document.hasNext())
-		{
-			current = document.getCharAtPointer();
-
-			// Valid endings
-			if (current == ',' || current == ']' || current == '}' || current == '#' || Character.isWhitespace(current))
+			// Check for zero literal or base prefix
+			if (current == '0')
 			{
-				break;
+				current = document.pinPointer()
+					.incrementPointer()
+					.getCharAtPointer();
+				// In case we're reading a float or time or something
+				if (current == '.' || current == '-' || current == ':')
+				{
+					document.rewindToPin();
+					return null;
+				}
+				// Valid endings for a zero literal
+				if (!document.hasNext() || current == ',' || current == ']' || current == '}' || Character.isWhitespace(current))
+				{
+					TomlDecimal symbol = new TomlDecimal();
+					symbol.value = 0;
+					symbols.push(symbol);
+					return symbol;
+				}
+				// Valid base prefixes. As for why uppercase base prefixes aren't allowed, ask the cretins who made this specification. YAML allows it. YAML! **YAML!**
+				numberBase = switch (current) {
+					case 'x' -> BASE_HEXADECIMAL;
+					case 'o' -> BASE_OCTAL;
+					case 'b' -> BASE_BINARY;
+					default -> {
+						if (current >= '0' && current <= '9')
+						{
+							throw TomlSyntaxException.of("Leading zeroes are not allowed", document);
+						}
+						throw TomlSyntaxException.of("Illegal character in number literal, expected a base prefix [ 'x', 'o', 'b' ]", document);
+					}
+				};
+				if (prefix != NULL_PREFIX)
+				{
+					throw TomlSyntaxException.of("Numbers with a base prefix cannot be prefixed with '+' or '-'", document);
+				}
+				// Remove the pin
+				document.incrementPointer()
+					.removePin();
 			}
-
-			// In case we're reading a float or time or something
-			if (current == '.' || current == '-' || current == ':')
+			// Make sure the value starts with a valid number
+			if (!isValidWithinBase(document.getCharAtPointer(), numberBase))
 			{
+				//throw TomlSyntaxException.of("Illegal character '" + document.getCharAtPointer() + "' in number literal, expected any character valid for a base " + numberBase + " literal", document);
 				document.rewindToPin();
-				return false;
+				return null;
 			}
-
-			// Underscore separator
-			if (current == '_')
+			// Read number
+			while (document.hasNext())
 			{
-				current = document.incrementPointer().getCharAtPointer();
-				
+				current = document.getCharAtPointer();
+				// Valid endings
+				if (current == ',' || current == ']' || current == '}' || current == '#' || Character.isWhitespace(current))
+				{
+					break;
+				}
+				// In case we're reading a float or time or something
+				if (current == '.' || current == '-' || current == ':')
+				{
+					document.rewindToPin();
+					return null;
+				}
+				// Underscore separator
+				if (current == '_')
+				{
+					current = document.incrementPointer().getCharAtPointer();
+					if (!isValidWithinBase(current, numberBase))
+					{
+						throw TomlSyntaxException.of("Underscore separator in number literal must be surrounded with valid digits", document);
+					}
+					builder.append(document.getCharAndIncrement());
+					continue;
+				}
 				if (!isValidWithinBase(current, numberBase))
 				{
-					throw TomlSyntaxException.of("Underscore separator in number literal must be surrounded with valid digits", document);
+					throw TomlSyntaxException.of("Illegal character '" + current + "' in number literal, expected any character valid for a base " + numberBase + " literal", document);
 				}
-
-				builder.append(document.getCharAndIncrement());
-				continue;
+				builder.append(current);
+				document.incrementPointer();
 			}
-
-			if (!isValidWithinBase(current, numberBase))
+			// Insert ± prefix if applicable
+			if (prefix != NULL_PREFIX)
 			{
-				throw TomlSyntaxException.of("Illegal character '" + current + "' in number literal, expected any character valid for a base " + numberBase + " literal", document);
+				builder.insert(0, prefix);
 			}
-
-			builder.append(current);
-			document.incrementPointer();
+			TomlDecimal symbol = new TomlDecimal();
+			symbol.value = Long.parseLong(builder.toString(), numberBase);
+			symbols.push(symbol);
+			return symbol;
+		} finally {
+			document.discardPinsAfter(pinDepth);
 		}
-
-		// Insert ± prefix if applicable
-		if (prefix != NULL_PREFIX)
-		{
-			builder.insert(0, prefix);
-		}
-
-		this.value = Long.parseLong(builder.toString(), numberBase);
-		symbols.push(this);
-
-		return true;
 	}
 
 	@Override

@@ -4,10 +4,10 @@ schema = 1
 [[artifact]]
 name = "gson"
 source = "maven"
-version = "2.14.0"
-fetch_url = "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar"
-cache_path = ".wisteria/cache/com.google.code.gson/gson/2.14.0/gson.jar"
-hash = "2cbd119bf1961c28788310963dc80ba65f58cdeec1dd139c8bdb1240faa2c36f"
+version = "2.15.0"
+fetch_url = "https://repo1.maven.org/maven2/com/google/code/gson/gson/2.15.0/gson-2.15.0.jar"
+cache_path = ".wisteria/cache/com.google.code.gson/gson/2.15.0/gson.jar"
+hash = "96d3dd843dc2911de01cdabcd50064cb9e860353102a0a78c96fd833d396fc7d"
 
 [[artifact]]
 name = "junit"

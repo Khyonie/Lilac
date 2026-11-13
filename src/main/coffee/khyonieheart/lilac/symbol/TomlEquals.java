@@ -15,17 +15,17 @@ public class TomlEquals extends Symbol<String>
 {
 	private static final Collection<Class<? extends Symbol<?>>> NEXT_SYMBOLS = LilacSymbols.VALUE_SYMBOLS;
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != '=')
 		{
-			return false;
+			return null;
 		}
 
-		symbols.push(this);
+		TomlEquals symbol = new TomlEquals();
+		symbols.push(symbol);
 		document.incrementPointer();
-		return true;
+		return symbol;
 	}
 
 	@Override

@@ -19,11 +19,11 @@ public class TomlStartOfDocument extends Symbol<String>
 	/** Reused since a lot of symbols use this */
 	public static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArrayTable.class, TomlStartTable.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndOfDocument.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		symbols.push(this);
-		return true;
+		TomlStartOfDocument symbol = new TomlStartOfDocument();
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override

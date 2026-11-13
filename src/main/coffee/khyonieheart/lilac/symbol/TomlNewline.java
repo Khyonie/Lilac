@@ -22,14 +22,14 @@ public class TomlNewline extends Symbol<String>
 
 	private static final String NEWLINE_DISALLOWED_MESSAGE = "Newlines are disallowed at this location";
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != '\n')
 		{
-			return false;
+			return null;
 		}
-		this.setPosition(document.getPointer());
+		TomlNewline symbol = new TomlNewline();
+		symbol.setPosition(document.getPointer());
 
 		switch (symbols.peek().getType())
 		{
@@ -45,7 +45,7 @@ public class TomlNewline extends Symbol<String>
 		if (!document.hasNext())
 		{
 			symbols.push(new TomlEndOfDocument());
-			return true;
+			return symbol;
 		}
 
 		switch (symbols.peek().getType())
@@ -68,8 +68,8 @@ public class TomlNewline extends Symbol<String>
 			}
 		}
 
-		symbols.push(this);
-		return true;
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override

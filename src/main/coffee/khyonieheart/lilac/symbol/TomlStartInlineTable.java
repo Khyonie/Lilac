@@ -19,20 +19,20 @@ public class TomlStartInlineTable extends Symbol<String>
 {
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlEndInlineTable.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != '{')
 		{
-			return false;
+			return null;
 		}
 
 		document.incrementPointer();
 		document.skipToNextImportant();
 
-		symbols.push(this);
+		TomlStartInlineTable symbol = new TomlStartInlineTable();
+		symbols.push(symbol);
 		decoder.addContext(ParserContext.INLINE_TABLE);
-		return true;
+		return symbol;
 	}
 
 	@Override

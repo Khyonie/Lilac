@@ -4,12 +4,13 @@
  */ 
 package coffee.khyonieheart.lilac;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 
 import coffee.khyonieheart.lilac.symbol.Symbol;
+import coffee.khyonieheart.lilac.symbol.SymbolFactory;
 import coffee.khyonieheart.lilac.symbol.TomlNewline;
+import coffee.khyonieheart.lilac.util.IntStack;
 
 /**
  * Represents a text document, with a pointer position to read character-by-character.
@@ -19,7 +20,8 @@ public class Document
 {
 	private String document;
 	private int pointer = 0;
-	private Deque<Integer> pins = new ArrayDeque<>();
+	//private Deque<Integer> pins = new ArrayDeque<>();
+	private IntStack pins = new IntStack(8);
 
 	// Character constants
 	private static final Character SPACE = ' ';
@@ -133,6 +135,41 @@ public class Document
 	}
 
 	/**
+	 * Gets the number of active pointer pins.
+	 *
+	 * @return Current pin stack depth.
+	 */
+	public int getPinDepth()
+	{
+		return this.pins.size();
+	}
+
+	/**
+	 * Discards pins created after a saved stack depth, without moving the pointer.
+	 * Parsing methods use this in a finally block to release their remaining pins
+	 * on success, failure, or exception while preserving their caller's pins.
+	 *
+	 * @param depth Pin depth saved on entry to the parsing method.
+	 * @throws IllegalArgumentException If depth is negative.
+	 * @throws IllegalStateException If pins below the saved depth were removed.
+	 */
+	public void discardPinsAfter(int depth)
+	{
+		if (depth < 0)
+		{
+			throw new IllegalArgumentException("Pin depth cannot be negative");
+		}
+		if (this.pins.size() < depth)
+		{
+			throw new IllegalStateException("Parser removed its caller's pins");
+		}
+		while (this.pins.size() > depth)
+		{
+			this.pins.pop();
+		}
+	}
+
+	/**
 	 * Moves the pointer back to the most recently pinned position and removes that pin.
 	 *
 	 * @throws IllegalStateException Thrown if no pinned positions are available.
@@ -218,7 +255,7 @@ public class Document
 
 		while (this.hasNext())
 		{
-			if (Symbol.getSymbol(TomlNewline.class).tryParse(this, decoder, symbols))
+			if (SymbolFactory.tryParse(TomlNewline.class, this, decoder, symbols) != null)
 			{
 				continue;
 			}

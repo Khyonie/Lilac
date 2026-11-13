@@ -30,17 +30,17 @@ public class TomlArraySeparator extends Symbol<String>
 	private static final List<Class<? extends Symbol<?>>> INLINE_TABLE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class);
 	private static final List<Class<? extends Symbol<?>>> V1_1_INLINE_TABLE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndInlineTable.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != ',')
 		{
-			return false;
+			return null;
 		}
 
-		symbols.push(this);
+		TomlArraySeparator symbol = new TomlArraySeparator();
+		symbols.push(symbol);
 		document.incrementPointer();
-		return true;
+		return symbol;
 	}
 
 	@Override

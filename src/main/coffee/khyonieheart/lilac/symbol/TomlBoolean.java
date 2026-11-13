@@ -22,8 +22,7 @@ public class TomlBoolean extends Symbol<Boolean>
 	private static final Collection<Class<? extends Symbol<?>>> INLINE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndInlineTable.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		// Check literal
 		switch (document.getCharAtPointer())
@@ -32,9 +31,10 @@ public class TomlBoolean extends Symbol<Boolean>
 				document.incrementPointer();
 				if (document.hasNext() && document.getCharAndIncrement() == 'r' && document.getCharAndIncrement() == 'u' && document.getCharAndIncrement() == 'e')
 				{
-					this.value = true;
-					symbols.push(this);
-					return true;
+					TomlBoolean symbol = new TomlBoolean();
+					symbol.value = true;
+					symbols.push(symbol);
+					return symbol;
 				}
 
 				throw TomlSyntaxException.of("Invalid character in boolean literal", document);
@@ -43,14 +43,15 @@ public class TomlBoolean extends Symbol<Boolean>
 				document.incrementPointer();
 				if (document.hasNext() && document.getCharAndIncrement() == 'a' && document.getCharAndIncrement() == 'l' && document.getCharAndIncrement() == 's' && document.getCharAndIncrement() == 'e')
 				{
-					this.value = false;
-					symbols.push(this);
-					return true;
+					TomlBoolean symbol = new TomlBoolean();
+					symbol.value = false;
+					symbols.push(symbol);
+					return symbol;
 				}
 
 				throw TomlSyntaxException.of("Invalid character in boolean literal", document);
 			}
-			default -> { return false; }
+			default -> { return null; }
 		}
 	}
 

@@ -15,16 +15,16 @@ public class TomlEndOfDocument extends Symbol<String>
 {
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of();
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.hasNext())
 		{
-			return false;
+			return null;
 		}
 
-		symbols.push(this);
-		return true;
+		TomlEndOfDocument symbol = new TomlEndOfDocument();
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override

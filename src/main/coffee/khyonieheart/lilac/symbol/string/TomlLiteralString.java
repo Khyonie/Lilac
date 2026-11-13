@@ -31,19 +31,19 @@ public class TomlLiteralString extends Symbol<String>
 	private static final Collection<Class<? extends Symbol<?>>> INLINE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndInlineTable.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
 	{
 		String string = LilacStrings.tryParseLiteralString(document);
 
 		if (string == null)
 		{
-			return false;
+			return null;
 		}
 
-		this.value = string;
-		symbols.push(this);
-		return true;
+		TomlLiteralString symbol = new TomlLiteralString();
+		symbol.value = string;
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override

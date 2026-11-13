@@ -27,181 +27,188 @@ public class TomlFloat extends Symbol<Float>
 	// [+-]?(\d+).(\d+)
 	//
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		if ((document.getCharAtPointer() < '0' && document.getCharAtPointer() > '9') && document.getCharAtPointer() != '-' && document.getCharAtPointer() != '+' && document.getCharAtPointer() != 'n' && document.getCharAtPointer() != 'i')
-		{
-			return false;
-		}
-
-		StringBuilder builder = new StringBuilder();
-		document.pinPointer();
-
-		if (document.getCharAtPointer() == '+' || document.getCharAtPointer() == '-')
-		{
-			builder.append(document.getCharAtPointer());
-			document.incrementPointer();
-		}
-
-		// Infinity literal
-		if (document.getCharAtPointer() == 'i')
-		{
-			document.incrementPointer();
-			if (document.getCharAndIncrement() == 'n' && document.getCharAndIncrement() == 'f')
+		int pinDepth = document.getPinDepth();
+		try {
+			if ((document.getCharAtPointer() < '0' && document.getCharAtPointer() > '9') && document.getCharAtPointer() != '-' && document.getCharAtPointer() != '+' && document.getCharAtPointer() != 'n' && document.getCharAtPointer() != 'i')
 			{
-				symbols.push(this);
-				this.value = builder.toString().equals("-") ? Float.NEGATIVE_INFINITY : Float.POSITIVE_INFINITY;
-				return true;
+				return null;
 			}
 
-			document.rewindToPin();
-			return false;
-		}
+			StringBuilder builder = new StringBuilder();
+			document.pinPointer();
 
-		// NaN literal
-		if (document.getCharAtPointer() == 'n')
-		{
-			document.incrementPointer();
-			if (document.getCharAndIncrement() == 'a' && document.getCharAndIncrement() == 'n')
+			if (document.getCharAtPointer() == '+' || document.getCharAtPointer() == '-')
 			{
-				symbols.push(this);
+				builder.append(document.getCharAtPointer());
+				document.incrementPointer();
+			}
 
-				if (builder.toString().equals("-"))
+			// Infinity literal
+			if (document.getCharAtPointer() == 'i')
+			{
+				document.incrementPointer();
+				if (document.getCharAndIncrement() == 'n' && document.getCharAndIncrement() == 'f')
 				{
-					if (decoder.isWarningEnabled(TomlWarning.UNSUPPORTED_NEGATIVE_NaN) && !warned)
+					TomlFloat symbol = new TomlFloat();
+					symbols.push(symbol);
+					symbol.value = builder.toString().equals("-") ? Float.NEGATIVE_INFINITY : Float.POSITIVE_INFINITY;
+					return symbol;
+				}
+
+				document.rewindToPin();
+				return null;
+			}
+
+			// NaN literal
+			if (document.getCharAtPointer() == 'n')
+			{
+				document.incrementPointer();
+				if (document.getCharAndIncrement() == 'a' && document.getCharAndIncrement() == 'n')
+				{
+					TomlFloat symbol = new TomlFloat();
+					symbols.push(symbol);
+
+					if (builder.toString().equals("-"))
 					{
-						decoder.sendWarning(TomlWarning.UNSUPPORTED_NEGATIVE_NaN, "TOML warning: Java does not support the -NaN literal. Using +NaN instead.");
-						warned = true;
+						if (decoder.isWarningEnabled(TomlWarning.UNSUPPORTED_NEGATIVE_NaN) && !warned)
+						{
+							decoder.sendWarning(TomlWarning.UNSUPPORTED_NEGATIVE_NaN, "TOML warning: Java does not support the -NaN literal. Using +NaN instead.");
+							warned = true;
+						}
 					}
+
+					symbol.value = Float.NaN;
+					return symbol;
 				}
 
-				this.value = Float.NaN;
-				return true;
+				document.rewindToPin();
+				return null;
 			}
 
-			document.rewindToPin();
-			return false;
-		}
-
-		boolean isExponential = false;
-		boolean dotPresent = false;
-		boolean isLeading = true;
-		char current;
-		while (document.hasNext())
-		{
-			current = document.getCharAtPointer();
-
-			// Exponential format
-			if (current == 'e' || current == 'E')
+			boolean isExponential = false;
+			boolean dotPresent = false;
+			boolean isLeading = true;
+			char current;
+			while (document.hasNext())
 			{
-				if (isExponential)
-				{
-					throw TomlSyntaxException.of("Only one 'e' exponential mark can be used in a float literal", document);
-				}
-
-				document.incrementPointer();
-				builder.append(current);
-				isExponential = true;
-				if (document.getCharAtPointer() == '-' || document.getCharAtPointer() == '+')
-				{
-					builder.append(document.getCharAndIncrement());
-				}
-
-				if (document.getCharAtPointer() < '0' || document.getCharAtPointer() > '9')
-				{
-					throw TomlSyntaxException.of("Exponential marks must be followed by a '+', '-', or a digit", document);
-				}
-				continue;
-			}
-
-			if (current == '.')
-			{
-				if (isExponential)
-				{
-					throw TomlSyntaxException.of("Dot mark '.' can not be used in a float literal's exponent", document);
-				}
-
-				if (dotPresent)
-				{
-					throw TomlSyntaxException.of("Only one '.' dot mark can be used in a float literal", document);
-				}
-
-				if (isLeading)
-				{
-					throw TomlSyntaxException.of("Float literal may not have a leading '.' dot mark", document);
-				}
-
-				builder.append(current);
-				document.incrementPointer();
-
-				if (document.getCharAtPointer() < '0' || document.getCharAtPointer() > '9')
-				{
-					throw TomlSyntaxException.of("Dot marks in float literals must be surrounded by digits", document);
-				}
-
-				dotPresent = true;
-				continue;
-			}
-
-			if (current == '_')
-			{
-				document.incrementPointer();
 				current = document.getCharAtPointer();
+
+				// Exponential format
+				if (current == 'e' || current == 'E')
+				{
+					if (isExponential)
+					{
+						throw TomlSyntaxException.of("Only one 'e' exponential mark can be used in a float literal", document);
+					}
+
+					document.incrementPointer();
+					builder.append(current);
+					isExponential = true;
+					if (document.getCharAtPointer() == '-' || document.getCharAtPointer() == '+')
+					{
+						builder.append(document.getCharAndIncrement());
+					}
+
+					if (document.getCharAtPointer() < '0' || document.getCharAtPointer() > '9')
+					{
+						throw TomlSyntaxException.of("Exponential marks must be followed by a '+', '-', or a digit", document);
+					}
+					continue;
+				}
+
+				if (current == '.')
+				{
+					if (isExponential)
+					{
+						throw TomlSyntaxException.of("Dot mark '.' can not be used in a float literal's exponent", document);
+					}
+
+					if (dotPresent)
+					{
+						throw TomlSyntaxException.of("Only one '.' dot mark can be used in a float literal", document);
+					}
+
+					if (isLeading)
+					{
+						throw TomlSyntaxException.of("Float literal may not have a leading '.' dot mark", document);
+					}
+
+					builder.append(current);
+					document.incrementPointer();
+
+					if (document.getCharAtPointer() < '0' || document.getCharAtPointer() > '9')
+					{
+						throw TomlSyntaxException.of("Dot marks in float literals must be surrounded by digits", document);
+					}
+
+					dotPresent = true;
+					continue;
+				}
+
+				if (current == '_')
+				{
+					document.incrementPointer();
+					current = document.getCharAtPointer();
+
+					if (current < '0' || current > '9')
+					{
+						throw TomlSyntaxException.of("Underscore must be followed by digit, found " + current, document);
+					}
+
+					builder.append(document.getCharAndIncrement());
+					continue;
+				}
+
+				if (current == ',' || current == ']' || current == '}' || current == '#' || Character.isWhitespace(current))
+				{
+					break;
+				}
 
 				if (current < '0' || current > '9')
 				{
-					throw TomlSyntaxException.of("Underscore must be followed by digit, found " + current, document);
+					document.rewindToPin();
+					return null;
 				}
 
-				builder.append(document.getCharAndIncrement());
-				continue;
+				if (isLeading && current == '0')
+				{
+					// Check if we're dealing with a decimal 0 literal
+					document.pinPointer().incrementPointer();
+					if (document.getCharAtPointer() == ',' || document.getCharAtPointer() == 'x' || document.getCharAtPointer() == 'o' || document.getCharAtPointer() == 'b' || document.getCharAtPointer() == ']' || document.getCharAtPointer() == '}' || document.getCharAtPointer() == '#' || Character.isWhitespace(document.getCharAtPointer()))
+					{
+						document.rewindToPin();
+						document.rewindToPin();
+						return null;
+					}
+
+					if (document.getCharAtPointer() != '.' && document.getCharAtPointer() != 'e' && document.getCharAtPointer() != 'E')
+					{
+						document.rewindToPin();
+						throw TomlSyntaxException.of("Float literal may not have any leading '0's", document);
+					}
+					document.rewindToPin();
+				}
+
+				isLeading = false;
+				document.incrementPointer();
+				builder.append(current);
 			}
 
-			if (current == ',' || current == ']' || current == '}' || current == '#' || Character.isWhitespace(current))
-			{
-				break;
-			}
-
-			if (current < '0' || current > '9')
+			if (!dotPresent && !isExponential)
 			{
 				document.rewindToPin();
-				return false;
+				return null;
 			}
 
-			if (isLeading && current == '0')
-			{
-				// Check if we're dealing with a decimal 0 literal
-				document.pinPointer().incrementPointer();
-				if (document.getCharAtPointer() == ',' || document.getCharAtPointer() == 'x' || document.getCharAtPointer() == 'o' || document.getCharAtPointer() == 'b' || document.getCharAtPointer() == ']' || document.getCharAtPointer() == '}' || document.getCharAtPointer() == '#' || Character.isWhitespace(document.getCharAtPointer()))
-				{
-					document.rewindToPin();
-					document.rewindToPin();
-					return false;
-				}
-
-				if (document.getCharAtPointer() != '.' && document.getCharAtPointer() != 'e' && document.getCharAtPointer() != 'E')
-				{
-					document.rewindToPin();
-					throw TomlSyntaxException.of("Float literal may not have any leading '0's", document);
-				}
-				document.rewindToPin();
-			}
-
-			isLeading = false;
-			document.incrementPointer();
-			builder.append(current);
+			TomlFloat symbol = new TomlFloat();
+			symbol.value = Float.parseFloat(builder.toString());
+			symbols.push(symbol);
+			return symbol;
+		} finally {
+			document.discardPinsAfter(pinDepth);
 		}
-
-		if (!dotPresent && !isExponential)
-		{
-			document.rewindToPin();
-			return false;
-		}
-
-		this.value = Float.parseFloat(builder.toString());
-		symbols.push(this);
-		return true;
 	}
 
 	@Override

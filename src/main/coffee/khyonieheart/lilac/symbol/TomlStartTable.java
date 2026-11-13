@@ -18,19 +18,19 @@ public class TomlStartTable extends Symbol<String>
 {
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != '[')
 		{
-			return false;
+			return null;
 		}
 
 		document.incrementPointer();
 		document.skipToNextImportant();
 
-		symbols.push(this);
-		return true;
+		TomlStartTable symbol = new TomlStartTable();
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override

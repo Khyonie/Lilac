@@ -35,40 +35,45 @@ public class TomlOffsetDateTime extends Symbol<OffsetDateTime>
 	private static final Collection<Class<? extends Symbol<?>>> INLINE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndInlineTable.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		document.pinPointer();
-		LocalDate date = LilacTimes.tryDate(document);
-		if (date == null)
-		{
-			return false;
-		}
+		int pinDepth = document.getPinDepth();
+		try {
+			document.pinPointer();
+			LocalDate date = LilacTimes.tryDate(document);
+			if (date == null)
+			{
+				return null;
+			}
 
-		char current = document.getCharAndIncrement();
-		if (current != ' ' && current != 't' && current != 'T')
-		{
-			document.rewindToPin();
-			return false;
-		}
+			char current = document.getCharAndIncrement();
+			if (current != ' ' && current != 't' && current != 'T')
+			{
+				document.rewindToPin();
+				return null;
+			}
 
-		LocalTime time = LilacTimes.tryTime(document, decoder);
-		if (time == null)
-		{
-			document.rewindToPin();
-			return false;
-		}
+			LocalTime time = LilacTimes.tryTime(document, decoder);
+			if (time == null)
+			{
+				document.rewindToPin();
+				return null;
+			}
 
-		ZoneOffset offset = LilacTimes.tryOffset(document);
-		if (offset == null)
-		{
-			document.rewindToPin();
-			return false;
-		}
+			ZoneOffset offset = LilacTimes.tryOffset(document);
+			if (offset == null)
+			{
+				document.rewindToPin();
+				return null;
+			}
 
-		symbols.push(this);
-		this.value = OffsetDateTime.of(date, time, offset);
-		return true;
+			TomlOffsetDateTime symbol = new TomlOffsetDateTime();
+			symbols.push(symbol);
+			symbol.value = OffsetDateTime.of(date, time, offset);
+			return symbol;
+		} finally {
+			document.discardPinsAfter(pinDepth);
+		}
 	}
 
 	@Override

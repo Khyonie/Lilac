@@ -32,18 +32,18 @@ public class TomlTime extends Symbol<LocalTime>
 	private static final Collection<Class<? extends Symbol<?>>> INLINE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndInlineTable.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		LocalTime time = LilacTimes.tryTime(document, decoder);
 		if (time == null)
 		{
-			return false;
+			return null;
 		}
 
-		symbols.push(this);
-		this.value = time;
-		return true;
+		TomlTime symbol = new TomlTime();
+		symbols.push(symbol);
+		symbol.value = time;
+		return symbol;
 	}
 
 	@Override

@@ -23,19 +23,19 @@ public class TomlLiteralKey extends Symbol<String>
 	private String value;
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlKeySeparator.class, TomlEquals.class, TomlEndArrayTable.class, TomlEndTable.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
 	{
 		String string = LilacStrings.tryParseLiteralString(document);
 
 		if (string == null)
 		{
-			return false;
+			return null;
 		}
 
-		this.value = string;
-		symbols.push(this);
-		return true;
+		TomlLiteralKey symbol = new TomlLiteralKey();
+		symbol.value = string;
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override

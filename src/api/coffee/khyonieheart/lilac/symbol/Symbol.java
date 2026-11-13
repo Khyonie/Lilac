@@ -32,12 +32,12 @@ public abstract class Symbol<T>
 	 * @param symbols Symbol stack being built by the scanner.
 	 *
 	 * @return {@code true} if this symbol parsed successfully, {@code false} otherwise.
+	 * public abstract boolean tryParse(
+	 *	Document document,
+	 *	TomlDecoder decoder,
+	 *	Deque<Symbol<?>> symbols
+	 * );
 	 */
-	public abstract boolean tryParse(
-		Document document,
-		TomlDecoder decoder,
-		Deque<Symbol<?>> symbols
-	);
 
 	/**
 	 * Gets the value parsed by this symbol.
@@ -92,7 +92,10 @@ public abstract class Symbol<T>
 	 *
 	 * @return New symbol instance.
 	 * @throws IllegalStateException Thrown if the symbol cannot be instantiated.
+	 *
+	 * @deprecated This method uses reflection, which can be slower for lots of lookups. Use {@link SymbolFactory} instead.
 	 */
+	@Deprecated
 	public static Symbol<?> getSymbol(
 		Class<? extends Symbol<?>> symbol
 	) {
@@ -132,8 +135,8 @@ public abstract class Symbol<T>
 		int position = document.getPointer();
 		for (Class<? extends Symbol<?>> symbolClass : this.getNextSymbols(decoder))
 		{
-			Symbol<?> symbol = getSymbol(symbolClass);
-			if (symbol.tryParse(document, decoder, symbols))
+			Symbol<?> symbol = SymbolFactory.tryParse(symbolClass, document, decoder, symbols);
+			if (symbol != null)
 			{
 				symbol.setPosition(position);
 				if (document.skipThroughWhitespace(symbols, decoder))
@@ -174,8 +177,8 @@ public abstract class Symbol<T>
 			nextSymbols = currentSymbol.getNextSymbols(decoder);
 			for (Class<? extends Symbol<?>> symbolClass : nextSymbols)
 			{
-				Symbol<?> symbol = getSymbol(symbolClass);
-				if (!symbol.tryParse(document, decoder, symbols))
+				Symbol<?> symbol = SymbolFactory.tryParse(symbolClass, document, decoder, symbols);
+				if (symbol == null)
 				{
 					continue;
 				}

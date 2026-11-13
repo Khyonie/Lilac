@@ -34,33 +34,38 @@ public class TomlDateTime extends Symbol<LocalDateTime>
 	private static final Collection<Class<? extends Symbol<?>>> INLINE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndInlineTable.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		document.pinPointer();
-		LocalDate date = LilacTimes.tryDate(document);
-		if (date == null)
-		{
-			return false;
-		}
+		int pinDepth = document.getPinDepth();
+		try {
+			document.pinPointer();
+			LocalDate date = LilacTimes.tryDate(document);
+			if (date == null)
+			{
+				return null;
+			}
 
-		char current = document.getCharAndIncrement();
-		if (current != ' ' && current != 't' && current != 'T')
-		{
-			document.rewindToPin();
-			return false;
-		}
+			char current = document.getCharAndIncrement();
+			if (current != ' ' && current != 't' && current != 'T')
+			{
+				document.rewindToPin();
+				return null;
+			}
 
-		LocalTime time = LilacTimes.tryTime(document, decoder);
-		if (time == null)
-		{
-			document.rewindToPin();
-			return false;
-		}
+			LocalTime time = LilacTimes.tryTime(document, decoder);
+			if (time == null)
+			{
+				document.rewindToPin();
+				return null;
+			}
 
-		symbols.push(this);
-		this.value = LocalDateTime.of(date, time);
-		return true;
+			TomlDateTime symbol = new TomlDateTime();
+			symbols.push(symbol);
+			symbol.value = LocalDateTime.of(date, time);
+			return symbol;
+		} finally {
+			document.discardPinsAfter(pinDepth);
+		}
 	}
 
 	@Override

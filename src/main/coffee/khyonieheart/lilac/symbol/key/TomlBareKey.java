@@ -23,53 +23,58 @@ public class TomlBareKey extends Symbol<String>
 	private String value;
 	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlKeySeparator.class, TomlEquals.class, TomlEndArrayTable.class, TomlEndTable.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
 	{
-		if (document.skipToNextImportant())
-		{
-			throw TomlSyntaxException.of("Unexpected end of document", document);
-		}
-
-		switch (symbols.peek().getType())
-		{
-			case TABLE_END -> throw TomlSyntaxException.of("Expected newline between table definition and key", document);
-			default -> {}
-		}
-
-		document.pinPointer();
-		StringBuilder builder = new StringBuilder();
-		do {
-			char current = document.getCharAtPointer();
-			if (current == '.' || current == ' ' || current == ']' || current == '=' || current == '#') // String-ending characters
+		int pinDepth = document.getPinDepth();
+		try {
+			if (document.skipToNextImportant())
 			{
-				break;
+				throw TomlSyntaxException.of("Unexpected end of document", document);
 			}
 
-			if ((current >= '0' && current <= '9') || (current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z') || current == '-' || current == '_')
+			switch (symbols.peek().getType())
 			{
-				builder.append(current);
-				document.incrementPointer();
-				continue;
+				case TABLE_END -> throw TomlSyntaxException.of("Expected newline between table definition and key", document);
+				default -> {}
 			}
 
-			if (document.getPin() == document.getPointer())
+			document.pinPointer();
+			StringBuilder builder = new StringBuilder();
+			do {
+				char current = document.getCharAtPointer();
+				if (current == '.' || current == ' ' || current == ']' || current == '=' || current == '#') // String-ending characters
+				{
+					break;
+				}
+
+				if ((current >= '0' && current <= '9') || (current >= 'A' && current <= 'Z') || (current >= 'a' && current <= 'z') || current == '-' || current == '_')
+				{
+					builder.append(current);
+					document.incrementPointer();
+					continue;
+				}
+
+				if (document.getPin() == document.getPointer())
+				{
+					return null;
+				}
+
+				throw TomlSyntaxException.of("Illegal bare key character \"" + current + "\"", document);
+			} while (document.hasNext());
+
+			if (builder.length() == 0)
 			{
-				return false;
+				document.rewindToPin();
+				throw TomlSyntaxException.of("Key cannot be empty", document);
 			}
 
-			throw TomlSyntaxException.of("Illegal bare key character \"" + current + "\"", document);
-		} while (document.hasNext());
-
-		if (builder.length() == 0)
-		{
-			document.rewindToPin();
-			throw TomlSyntaxException.of("Key cannot be empty", document);
+			TomlBareKey symbol = new TomlBareKey();
+			symbol.value = builder.toString();
+			symbols.push(symbol);
+			return symbol;
+		} finally {
+			document.discardPinsAfter(pinDepth);
 		}
-
-		this.value = builder.toString();
-		symbols.push(this);
-		return true;
 	}
 
 	@Override
@@ -89,4 +94,6 @@ public class TomlBareKey extends Symbol<String>
 	{
 		return NEXT_SYMBOLS;
 	}
+
+	public static void test() {}
 }

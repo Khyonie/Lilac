@@ -20,20 +20,20 @@ public class TomlEndArray extends Symbol<String>
 	private static final Collection<Class<? extends Symbol<?>>> INLINE_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndInlineTable.class);
 	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = List.of(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class);
 
-	@Override
-	public boolean tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
+	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		if (document.getCharAtPointer() != ']')
 		{
-			return false;
+			return null;
 		}
 
 		document.incrementPointer();
 		document.skipToNextImportant();
 
-		symbols.push(this);
+		TomlEndArray symbol = new TomlEndArray();
+		symbols.push(symbol);
 		decoder.removeContext();
-		return true;
+		return symbol;
 	}
 
 	@Override
