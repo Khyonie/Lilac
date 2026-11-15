@@ -15,6 +15,7 @@ import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.SymbolFactory;
 import coffee.khyonieheart.lilac.symbol.TomlEndOfDocument;
 import coffee.khyonieheart.lilac.symbol.TomlStartOfDocument;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 /**
  * Default TOML decoder implementation.
@@ -71,10 +72,11 @@ public class LilacDecoder implements TomlDecoder
 		Symbol<?> symbol
 	) {
 		StringBuilder builder = new StringBuilder();
-		Iterator<Class<? extends Symbol<?>>> iter = symbol.getNextSymbols(this).iterator();
+		Iterator<SymbolParseFunction> iter = symbol.getNextSymbols(this).iterator();
 		while (iter.hasNext())
 		{
-			builder.append(SymbolFactory.getInstance(iter.next()).getClass().getSimpleName());
+			SymbolParseFunction parser = iter.next();
+			builder.append(SymbolFactory.reverseLookup(parser).getSimpleName());
 
 			if (iter.hasNext())
 			{

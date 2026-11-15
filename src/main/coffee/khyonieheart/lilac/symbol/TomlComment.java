@@ -13,15 +13,13 @@ import coffee.khyonieheart.lilac.LilacSymbols;
 import coffee.khyonieheart.lilac.ParserContext;
 import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.TomlSyntaxException;
-import coffee.khyonieheart.lilac.symbol.key.TomlBareKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlLiteralKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlQuotedKey;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlComment extends Symbol<String>
 {
 	private String comment;
-	private static final Collection<Class<? extends Symbol<?>>> STANDARD_NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArrayTable.class, TomlStartTable.class, TomlArraySeparator.class, TomlEndInlineTable.class, TomlEndArray.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndOfDocument.class);
-	private static final Collection<Class<? extends Symbol<?>>> ARRAY_NEXT_SYMBOLS = LilacSymbols.build().add(TomlComment.class, TomlArraySeparator.class, TomlEndArray.class).add(LilacSymbols.VALUE_SYMBOLS).create();
+	private static final Collection<SymbolParseFunction> STANDARD_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
+	private static final Collection<SymbolParseFunction> ARRAY_NEXT_SYMBOLS = LilacSymbols.build().add(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY).add(LilacSymbols.VALUE_SYMBOLS).create();
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -102,7 +100,7 @@ public class TomlComment extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		if (decoder.getContext() == null)
 		{

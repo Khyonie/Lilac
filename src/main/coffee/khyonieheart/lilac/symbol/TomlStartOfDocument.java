@@ -10,14 +10,12 @@ import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.TomlDecoder;
-import coffee.khyonieheart.lilac.symbol.key.TomlBareKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlLiteralKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlQuotedKey;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlStartOfDocument extends Symbol<String>
 {
 	/** Reused since a lot of symbols use this */
-	public static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArrayTable.class, TomlStartTable.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndOfDocument.class);
+	public static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -39,7 +37,7 @@ public class TomlStartOfDocument extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

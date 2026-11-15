@@ -12,6 +12,7 @@ import java.util.Objects;
 
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.TomlDecoder;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 /**
  * Parser symbol used by Lilac's recursive scanner.
@@ -75,13 +76,13 @@ public abstract class Symbol<T>
 	}
 
 	/**
-	 * Gets the symbol classes that may follow this symbol in the current parser context.
+	 * Gets the symbol-parsing functions that may follow this symbol in the current parser context.
 	 *
 	 * @param decoder Decoder that owns parser state.
 	 *
 	 * @return Symbol classes that may be parsed next.
 	 */
-	public abstract Collection<Class<? extends Symbol<?>>> getNextSymbols(
+	public abstract Collection<SymbolParseFunction> getNextSymbols(
 		TomlDecoder decoder
 	);
 
@@ -133,9 +134,9 @@ public abstract class Symbol<T>
 		}
 
 		int position = document.getPointer();
-		for (Class<? extends Symbol<?>> symbolClass : this.getNextSymbols(decoder))
+		for (SymbolParseFunction symbolParser : this.getNextSymbols(decoder))
 		{
-			Symbol<?> symbol = SymbolFactory.tryParse(symbolClass, document, decoder, symbols);
+			Symbol<?> symbol = symbolParser.apply(document, decoder, symbols);
 			if (symbol != null)
 			{
 				symbol.setPosition(position);
@@ -167,17 +168,15 @@ public abstract class Symbol<T>
 
 		// Initial state
 		int position;
-		Collection<Class<? extends Symbol<?>>> nextSymbols;
 		Symbol<?> currentSymbol = new TomlStartOfDocument();
 
 		// Iterate over document by trying symbols one-by-one until one matches
 		documentLoop: while (!document.skipThroughWhitespace(symbols, decoder))
 		{
 			position = document.getPointer();
-			nextSymbols = currentSymbol.getNextSymbols(decoder);
-			for (Class<? extends Symbol<?>> symbolClass : nextSymbols)
+			for (SymbolParseFunction symbolParser : currentSymbol.getNextSymbols(decoder))
 			{
-				Symbol<?> symbol = SymbolFactory.tryParse(symbolClass, document, decoder, symbols);
+				Symbol<?> symbol = symbolParser.apply(document, decoder, symbols);
 				if (symbol == null)
 				{
 					continue;

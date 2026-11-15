@@ -11,13 +11,11 @@ import java.util.List;
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.ParserContext;
 import coffee.khyonieheart.lilac.TomlDecoder;
-import coffee.khyonieheart.lilac.symbol.key.TomlBareKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlLiteralKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlQuotedKey;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlStartInlineTable extends Symbol<String>
 {
-	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlEndInlineTable.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class);
+	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.END_INLINE_TABLE, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -48,7 +46,7 @@ public class TomlStartInlineTable extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

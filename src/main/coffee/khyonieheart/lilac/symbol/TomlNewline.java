@@ -14,10 +14,11 @@ import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.TomlSyntaxException;
 import coffee.khyonieheart.lilac.TomlVersion;
 import coffee.khyonieheart.lilac.TomlWarning;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlNewline extends Symbol<String>
 {
-	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = TomlStartOfDocument.NEXT_SYMBOLS;
+	private static final List<SymbolParseFunction> NEXT_SYMBOLS = TomlStartOfDocument.NEXT_SYMBOLS;
 	private static boolean warned = false;
 
 	private static final String NEWLINE_DISALLOWED_MESSAGE = "Newlines are disallowed at this location";
@@ -85,7 +86,7 @@ public class TomlNewline extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

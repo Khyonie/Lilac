@@ -10,10 +10,11 @@ import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.TomlDecoder;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlEndOfDocument extends Symbol<String>
 {
-	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of();
+	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of();
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -40,7 +41,7 @@ public class TomlEndOfDocument extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

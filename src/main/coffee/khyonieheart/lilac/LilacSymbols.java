@@ -8,27 +8,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import coffee.khyonieheart.lilac.symbol.Symbol;
-import coffee.khyonieheart.lilac.symbol.TomlBoolean;
-import coffee.khyonieheart.lilac.symbol.TomlComment;
-import coffee.khyonieheart.lilac.symbol.TomlDecimal;
-import coffee.khyonieheart.lilac.symbol.TomlEndOfDocument;
-import coffee.khyonieheart.lilac.symbol.TomlFloat;
-import coffee.khyonieheart.lilac.symbol.TomlStartArray;
-import coffee.khyonieheart.lilac.symbol.TomlStartArrayTable;
-import coffee.khyonieheart.lilac.symbol.TomlStartInlineTable;
-import coffee.khyonieheart.lilac.symbol.TomlStartTable;
-import coffee.khyonieheart.lilac.symbol.key.TomlBareKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlLiteralKey;
-import coffee.khyonieheart.lilac.symbol.key.TomlQuotedKey;
-import coffee.khyonieheart.lilac.symbol.string.TomlLiteralString;
-import coffee.khyonieheart.lilac.symbol.string.TomlMultilineLiteralString;
-import coffee.khyonieheart.lilac.symbol.string.TomlMultilineString;
-import coffee.khyonieheart.lilac.symbol.string.TomlRegularString;
-import coffee.khyonieheart.lilac.symbol.time.TomlDate;
-import coffee.khyonieheart.lilac.symbol.time.TomlDateTime;
-import coffee.khyonieheart.lilac.symbol.time.TomlOffsetDateTime;
-import coffee.khyonieheart.lilac.symbol.time.TomlTime;
+import coffee.khyonieheart.lilac.symbol.SymbolParsers;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 /**
  * Reusable collections of symbols
@@ -36,11 +17,11 @@ import coffee.khyonieheart.lilac.symbol.time.TomlTime;
 public class LilacSymbols
 {
 	/** Symbols valid at the start of a document */
-	public static final Collection<Class<? extends Symbol<?>>> STARTER_SYMBOLS = List.of(TomlComment.class, TomlStartArrayTable.class, TomlStartTable.class, TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class, TomlEndOfDocument.class);
+	public static final Collection<SymbolParseFunction> STARTER_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
 	/** Symbols for all key types */
-	public static final Collection<Class<? extends Symbol<?>>> KEY_SYMBOLS = build().add(TomlQuotedKey.class, TomlLiteralKey.class, TomlBareKey.class).create();
+	public static final Collection<SymbolParseFunction> KEY_SYMBOLS = build().add(SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY).create();
 	/** Symbols for all value types */
-	public static final Collection<Class<? extends Symbol<?>>> VALUE_SYMBOLS = build().add(TomlMultilineString.class, TomlMultilineLiteralString.class, TomlRegularString.class, TomlLiteralString.class, TomlStartArray.class, TomlStartInlineTable.class, TomlBoolean.class, TomlOffsetDateTime.class, TomlDateTime.class, TomlDate.class, TomlTime.class, TomlFloat.class, TomlDecimal.class).create();
+	public static final Collection<SymbolParseFunction> VALUE_SYMBOLS = build().add(SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.START_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.FLOAT, SymbolParsers.DECIMAL).create();
 
 	public static LilacSymbolCollectionBuilder build()
 	{
@@ -49,20 +30,20 @@ public class LilacSymbols
 
 	public static class LilacSymbolCollectionBuilder
 	{
-		private List<Class<? extends Symbol<?>>> symbols = new ArrayList<>();
+		private List<SymbolParseFunction> symbols = new ArrayList<>();
 
 		/** Internal constructor. Use {@link LilacSymbols#build()}. */
 		private LilacSymbolCollectionBuilder() {}
 
 		@SafeVarargs
 		public final LilacSymbolCollectionBuilder add(
-			Collection<Class<? extends Symbol<?>>>... symbols
+			Collection<SymbolParseFunction>... symbols
 		) {
-			for (Collection<Class<? extends Symbol<?>>> symbolsCollection : symbols)
+			for (Collection<SymbolParseFunction> symbolsCollection : symbols)
 			{
-				for (Class<? extends Symbol<?>> symbolClass : symbolsCollection)
+				for (SymbolParseFunction symbolParser : symbolsCollection)
 				{
-					this.symbols.add(symbolClass);
+					this.symbols.add(symbolParser);
 				}
 			}
 
@@ -71,9 +52,9 @@ public class LilacSymbols
 
 		@SafeVarargs
 		public final LilacSymbolCollectionBuilder add(
-			Class<? extends Symbol<?>>... symbols
+			SymbolParseFunction... symbols
 		) {
-			for (Class<? extends Symbol<?>> symbol : symbols)
+			for (SymbolParseFunction symbol : symbols)
 			{
 				this.symbols.add(symbol);
 			}
@@ -81,7 +62,7 @@ public class LilacSymbols
 			return this;
 		}
 
-		public Collection<Class<? extends Symbol<?>>> create()
+		public Collection<SymbolParseFunction> create()
 		{
 			return this.symbols;
 		}

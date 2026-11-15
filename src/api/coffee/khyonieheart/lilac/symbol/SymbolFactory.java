@@ -24,6 +24,7 @@ public class SymbolFactory
 {
 	private static final Map<Class<?>, Supplier<Symbol<?>>> SYMBOL_REGISTRY;
 	private static final Map<Class<?>, SymbolParseFunction> SYMBOL_PARSE_REGISTRY;
+	private static final Map<SymbolParseFunction, Class<?>> REVERSE_SYMBOL_LOOKUPS;
 
 	static {
 		SYMBOL_REGISTRY = new HashMap<>() {{
@@ -67,41 +68,46 @@ public class SymbolFactory
 
 		SYMBOL_PARSE_REGISTRY = new HashMap<>() {{
 			// key
-			put(TomlBareKey.class, TomlBareKey::tryParse);
-			put(TomlLiteralKey.class, TomlLiteralKey::tryParse);
-			put(TomlQuotedKey.class, TomlQuotedKey::tryParse);
+			put(TomlBareKey.class, SymbolParsers.BARE_KEY);
+			put(TomlLiteralKey.class, SymbolParsers.LITERAL_KEY);
+			put(TomlQuotedKey.class, SymbolParsers.QUOTED_KEY);
 
 			// string
-			put(TomlLiteralString.class, TomlLiteralString::tryParse);
-			put(TomlMultilineLiteralString.class, TomlMultilineLiteralString::tryParse);
-			put(TomlMultilineString.class, TomlMultilineString::tryParse);
-			put(TomlRegularString.class, TomlRegularString::tryParse);
+			put(TomlLiteralString.class, SymbolParsers.LITERAL_STRING);
+			put(TomlMultilineLiteralString.class, SymbolParsers.MULTILINE_LITERAL_STRING);
+			put(TomlMultilineString.class, SymbolParsers.MULTILINE_STRING);
+			put(TomlRegularString.class, SymbolParsers.REGULAR_STRING);
 			
 			// time
-			put(TomlDate.class, TomlDate::tryParse);
-			put(TomlDateTime.class, TomlDateTime::tryParse);
-			put(TomlOffsetDateTime.class, TomlOffsetDateTime::tryParse);
-			put(TomlTime.class, TomlTime::tryParse);
+			put(TomlDate.class, SymbolParsers.DATE);
+			put(TomlDateTime.class, SymbolParsers.DATE_TIME);
+			put(TomlOffsetDateTime.class, SymbolParsers.OFFSET_DATE_TIME);
+			put(TomlTime.class, SymbolParsers.TIME);
 
 			// Others
-			put(TomlArraySeparator.class, TomlArraySeparator::tryParse);
-			put(TomlBoolean.class, TomlBoolean::tryParse);
-			put(TomlComment.class, TomlComment::tryParse);
-			put(TomlDecimal.class, TomlDecimal::tryParse);
-			put(TomlEndArray.class, TomlEndArray::tryParse);
-			put(TomlEndArrayTable.class, TomlEndArrayTable::tryParse);
-			put(TomlEndInlineTable.class, TomlEndInlineTable::tryParse);
-			put(TomlEndOfDocument.class, TomlEndOfDocument::tryParse);
-			put(TomlEndTable.class, TomlEndTable::tryParse);
-			put(TomlEquals.class, TomlEquals::tryParse);
-			put(TomlFloat.class, TomlFloat::tryParse);
-			put(TomlKeySeparator.class, TomlKeySeparator::tryParse);
-			put(TomlNewline.class, TomlNewline::tryParse);
-			put(TomlStartArray.class, TomlStartArray::tryParse);
-			put(TomlStartArrayTable.class, TomlStartArrayTable::tryParse);
-			put(TomlStartInlineTable.class, TomlStartInlineTable::tryParse);
-			put(TomlStartOfDocument.class, TomlStartOfDocument::tryParse);
-			put(TomlStartTable.class, TomlStartTable::tryParse);
+			put(TomlArraySeparator.class, SymbolParsers.ARRAY_SEPARATOR);
+			put(TomlBoolean.class, SymbolParsers.BOOLEAN);
+			put(TomlComment.class, SymbolParsers.COMMENT);
+			put(TomlDecimal.class, SymbolParsers.DECIMAL);
+			put(TomlEndArray.class, SymbolParsers.END_ARRAY);
+			put(TomlEndArrayTable.class, SymbolParsers.END_ARRAY_TABLE);
+			put(TomlEndInlineTable.class, SymbolParsers.END_INLINE_TABLE);
+			put(TomlEndOfDocument.class, SymbolParsers.END_OF_DOCUMENT);
+			put(TomlEndTable.class, SymbolParsers.END_TABLE);
+			put(TomlEquals.class, SymbolParsers.EQUALS);
+			put(TomlFloat.class, SymbolParsers.FLOAT);
+			put(TomlKeySeparator.class, SymbolParsers.KEY_SEPARATOR);
+			put(TomlNewline.class, SymbolParsers.NEWLINE);
+			put(TomlStartArray.class, SymbolParsers.START_ARRAY);
+			put(TomlStartArrayTable.class, SymbolParsers.START_ARRAY_TABLE);
+			put(TomlStartInlineTable.class, SymbolParsers.START_INLINE_TABLE);
+			put(TomlStartOfDocument.class, SymbolParsers.START_OF_DOCUMENT);
+			put(TomlStartTable.class, SymbolParsers.START_TABLE);
+		}};
+
+		// Reverse lookups
+		REVERSE_SYMBOL_LOOKUPS = new HashMap<>() {{
+			SYMBOL_PARSE_REGISTRY.forEach((type, function) -> this.put(function, type));
 		}};
 	}
 
@@ -113,5 +119,16 @@ public class SymbolFactory
 	public static Symbol<?> tryParse(Class<? extends Symbol<?>> clazz, Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
 		return SYMBOL_PARSE_REGISTRY.get(clazz).apply(document, decoder, symbols);
+	}
+
+	/**
+	 * Looks up a shared parser reference from {@link SymbolParsers}.
+	 *
+	 * @param function Shared parser reference used by the symbol transition lists.
+	 * @return Symbol class, or null for an unregistered function reference.
+	 */
+	public static Class<?> reverseLookup(SymbolParseFunction function)
+	{
+		return REVERSE_SYMBOL_LOOKUPS.get(function);
 	}
 }

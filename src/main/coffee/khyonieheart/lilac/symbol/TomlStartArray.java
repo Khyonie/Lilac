@@ -11,18 +11,11 @@ import java.util.List;
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.ParserContext;
 import coffee.khyonieheart.lilac.TomlDecoder;
-import coffee.khyonieheart.lilac.symbol.string.TomlLiteralString;
-import coffee.khyonieheart.lilac.symbol.string.TomlMultilineLiteralString;
-import coffee.khyonieheart.lilac.symbol.string.TomlMultilineString;
-import coffee.khyonieheart.lilac.symbol.string.TomlRegularString;
-import coffee.khyonieheart.lilac.symbol.time.TomlDate;
-import coffee.khyonieheart.lilac.symbol.time.TomlDateTime;
-import coffee.khyonieheart.lilac.symbol.time.TomlOffsetDateTime;
-import coffee.khyonieheart.lilac.symbol.time.TomlTime;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlStartArray extends Symbol<String>
 {
-	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlComment.class, TomlStartArray.class, TomlEndArray.class, TomlStartInlineTable.class, TomlBoolean.class, TomlMultilineString.class, TomlMultilineLiteralString.class, TomlRegularString.class, TomlLiteralString.class, TomlOffsetDateTime.class, TomlDateTime.class, TomlDate.class, TomlTime.class, TomlFloat.class, TomlDecimal.class, TomlEndArray.class);
+	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY, SymbolParsers.END_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.FLOAT, SymbolParsers.DECIMAL, SymbolParsers.END_ARRAY);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -53,7 +46,7 @@ public class TomlStartArray extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

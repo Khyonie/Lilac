@@ -12,16 +12,14 @@ import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.LilacStrings;
 import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.symbol.Symbol;
+import coffee.khyonieheart.lilac.symbol.SymbolParsers;
 import coffee.khyonieheart.lilac.symbol.SymbolType;
-import coffee.khyonieheart.lilac.symbol.TomlEndArrayTable;
-import coffee.khyonieheart.lilac.symbol.TomlEndTable;
-import coffee.khyonieheart.lilac.symbol.TomlEquals;
-import coffee.khyonieheart.lilac.symbol.TomlKeySeparator;
+import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlLiteralKey extends Symbol<String>
 {
 	private String value;
-	private static final List<Class<? extends Symbol<?>>> NEXT_SYMBOLS = List.of(TomlKeySeparator.class, TomlEquals.class, TomlEndArrayTable.class, TomlEndTable.class);
+	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.KEY_SEPARATOR, SymbolParsers.EQUALS, SymbolParsers.END_ARRAY_TABLE, SymbolParsers.END_TABLE);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
 	{
@@ -51,7 +49,7 @@ public class TomlLiteralKey extends Symbol<String>
 	}
 
 	@Override
-	public Collection<Class<? extends Symbol<?>>> getNextSymbols(TomlDecoder decoder) 
+	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}
