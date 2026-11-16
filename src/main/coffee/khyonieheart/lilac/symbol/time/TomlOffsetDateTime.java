@@ -13,19 +13,19 @@ import java.util.Deque;
 import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
-import coffee.khyonieheart.lilac.LilacTimes;
+import coffee.khyonieheart.lilac.decoder.LilacTimes;
 import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.SymbolParsers;
 import coffee.khyonieheart.lilac.symbol.SymbolType;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
+import coffee.khyonieheart.lilac.symbol.SymbolParser;
 
 public class TomlOffsetDateTime extends Symbol<OffsetDateTime>
 {
 	private OffsetDateTime value;
-	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
-	private static final Collection<SymbolParseFunction> INLINE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE);
-	private static final Collection<SymbolParseFunction> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY);
+	private static final List<SymbolParser> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
+	private static final Collection<SymbolParser> INLINE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE);
+	private static final Collection<SymbolParser> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -81,7 +81,7 @@ public class TomlOffsetDateTime extends Symbol<OffsetDateTime>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		if (decoder.getContext() == null)
 		{

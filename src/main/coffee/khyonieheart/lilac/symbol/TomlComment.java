@@ -9,25 +9,19 @@ import java.util.Deque;
 import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
-import coffee.khyonieheart.lilac.LilacSymbols;
 import coffee.khyonieheart.lilac.ParserContext;
 import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.TomlSyntaxException;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
+import coffee.khyonieheart.lilac.decoder.LilacSymbols;
 
 public class TomlComment extends Symbol<String>
 {
 	private String comment;
-	private static final Collection<SymbolParseFunction> STANDARD_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
-	private static final Collection<SymbolParseFunction> ARRAY_NEXT_SYMBOLS = LilacSymbols.build().add(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY).add(LilacSymbols.VALUE_SYMBOLS).create();
+	private static final Collection<SymbolParser> STANDARD_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
+	private static final Collection<SymbolParser> ARRAY_NEXT_SYMBOLS = LilacSymbols.build().add(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY).add(LilacSymbols.VALUE_SYMBOLS).create();
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		if (document.getCharAtPointer() != '#')
-		{
-			return null;
-		}
-
 		if (decoder.getContext() != null)
 		{
 			if (decoder.getContext() == ParserContext.INLINE_TABLE)
@@ -100,7 +94,7 @@ public class TomlComment extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		if (decoder.getContext() == null)
 		{

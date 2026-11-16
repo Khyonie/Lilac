@@ -2,7 +2,7 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2026 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.encoder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,11 +11,11 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 
-class TomlValueEncoder
+public class TomlValueEncoder
 {
 	private final TomlEncoderSettings settings;
 
-	TomlValueEncoder(
+	public TomlValueEncoder(
 		TomlEncoderSettings settings
 	) {
 		this.settings = settings;
@@ -23,7 +23,7 @@ class TomlValueEncoder
 
 	/** Branch method which takes any TOML-spec type and calls the appropriate encoder method. */
 	@SuppressWarnings("unchecked")
-	String encode(
+	public String encode(
 		Map<String, Object> rootData,
 		Object object,
 		int tabDepth

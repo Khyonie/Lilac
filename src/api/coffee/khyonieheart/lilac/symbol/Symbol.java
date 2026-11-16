@@ -12,7 +12,6 @@ import java.util.Objects;
 
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.TomlDecoder;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 /**
  * Parser symbol used by Lilac's recursive scanner.
@@ -76,13 +75,13 @@ public abstract class Symbol<T>
 	}
 
 	/**
-	 * Gets the symbol-parsing functions that may follow this symbol in the current parser context.
+	 * Gets the symbol parsers that may follow this symbol in the current parser context.
 	 *
 	 * @param decoder Decoder that owns parser state.
 	 *
-	 * @return Symbol classes that may be parsed next.
+	 * @return Symbol parsers that may be attempted next.
 	 */
-	public abstract Collection<SymbolParseFunction> getNextSymbols(
+	public abstract Collection<SymbolParser> getNextSymbols(
 		TomlDecoder decoder
 	);
 
@@ -134,9 +133,13 @@ public abstract class Symbol<T>
 		}
 
 		int position = document.getPointer();
-		for (SymbolParseFunction symbolParser : this.getNextSymbols(decoder))
+		for (SymbolParser symbolParser : this.getNextSymbols(decoder))
 		{
-			Symbol<?> symbol = symbolParser.apply(document, decoder, symbols);
+			if (!symbolParser.isApplicable(document))
+			{
+				continue;
+			}
+			Symbol<?> symbol = symbolParser.tryParse(document, decoder, symbols);
 			if (symbol != null)
 			{
 				symbol.setPosition(position);
@@ -170,17 +173,26 @@ public abstract class Symbol<T>
 		int position;
 		Symbol<?> currentSymbol = new TomlStartOfDocument();
 
+		//Map<Class<?>, Integer> parseAttempts = new HashMap<>();
+		//Map<Class<?>, Integer> successfulParses = new HashMap<>();
+
 		// Iterate over document by trying symbols one-by-one until one matches
 		documentLoop: while (!document.skipThroughWhitespace(symbols, decoder))
 		{
 			position = document.getPointer();
-			for (SymbolParseFunction symbolParser : currentSymbol.getNextSymbols(decoder))
+			for (SymbolParser symbolParser : currentSymbol.getNextSymbols(decoder))
 			{
-				Symbol<?> symbol = symbolParser.apply(document, decoder, symbols);
+				if (!symbolParser.isApplicable(document))
+				{
+					continue;
+				}
+				//parseAttempts.put(symbolParser.type(), parseAttempts.getOrDefault(symbolParser.type(), 0) + 1);
+				Symbol<?> symbol = symbolParser.tryParse(document, decoder, symbols);
 				if (symbol == null)
 				{
 					continue;
 				}
+				//successfulParses.put(symbolParser.type(), successfulParses.getOrDefault(symbolParser.type(), 0) + 1);
 
 				// Symbol matched, continue from there
 				symbol.setPosition(position);
@@ -190,5 +202,11 @@ public abstract class Symbol<T>
 
 			return;
 		}
+
+		/*
+		parseAttempts.forEach((clazz, attempts) -> {
+			System.out.println("Parses for " + clazz.getSimpleName() + ": " + attempts + " successful parses: " + successfulParses.getOrDefault(clazz, 0));
+		});
+		*/
 	}
 }

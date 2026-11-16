@@ -18,13 +18,11 @@ import coffee.khyonieheart.lilac.symbol.time.TomlDate;
 import coffee.khyonieheart.lilac.symbol.time.TomlDateTime;
 import coffee.khyonieheart.lilac.symbol.time.TomlOffsetDateTime;
 import coffee.khyonieheart.lilac.symbol.time.TomlTime;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class SymbolFactory
 {
 	private static final Map<Class<?>, Supplier<Symbol<?>>> SYMBOL_REGISTRY;
-	private static final Map<Class<?>, SymbolParseFunction> SYMBOL_PARSE_REGISTRY;
-	private static final Map<SymbolParseFunction, Class<?>> REVERSE_SYMBOL_LOOKUPS;
+	private static final Map<Class<?>, SymbolParser> SYMBOL_PARSE_REGISTRY;
 
 	static {
 		SYMBOL_REGISTRY = new HashMap<>() {{
@@ -104,11 +102,6 @@ public class SymbolFactory
 			put(TomlStartOfDocument.class, SymbolParsers.START_OF_DOCUMENT);
 			put(TomlStartTable.class, SymbolParsers.START_TABLE);
 		}};
-
-		// Reverse lookups
-		REVERSE_SYMBOL_LOOKUPS = new HashMap<>() {{
-			SYMBOL_PARSE_REGISTRY.forEach((type, function) -> this.put(function, type));
-		}};
 	}
 
 	public static Symbol<?> getInstance(Class<? extends Symbol<?>> clazz)
@@ -118,17 +111,7 @@ public class SymbolFactory
 
 	public static Symbol<?> tryParse(Class<? extends Symbol<?>> clazz, Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		return SYMBOL_PARSE_REGISTRY.get(clazz).apply(document, decoder, symbols);
-	}
-
-	/**
-	 * Looks up a shared parser reference from {@link SymbolParsers}.
-	 *
-	 * @param function Shared parser reference used by the symbol transition lists.
-	 * @return Symbol class, or null for an unregistered function reference.
-	 */
-	public static Class<?> reverseLookup(SymbolParseFunction function)
-	{
-		return REVERSE_SYMBOL_LOOKUPS.get(function);
+		SymbolParser parser = SYMBOL_PARSE_REGISTRY.get(clazz);
+		return parser.isApplicable(document) ? parser.tryParse(document, decoder, symbols) : null;
 	}
 }

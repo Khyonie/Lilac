@@ -8,8 +8,7 @@ import java.util.Deque;
 import java.util.Objects;
 
 import coffee.khyonieheart.lilac.symbol.Symbol;
-import coffee.khyonieheart.lilac.symbol.SymbolFactory;
-import coffee.khyonieheart.lilac.symbol.TomlNewline;
+import coffee.khyonieheart.lilac.symbol.SymbolParsers;
 import coffee.khyonieheart.lilac.util.IntStack;
 
 /**
@@ -219,6 +218,11 @@ public class Document
 		return this.document.charAt(pointer++);
 	}
 
+	public boolean matchsSubstringAtPointer(String substring)
+	{
+		return this.document.startsWith(substring, this.pointer);
+	}
+
 	/**
 	 * Gets the length of the source text backing this document.
 	 *
@@ -255,7 +259,7 @@ public class Document
 
 		while (this.hasNext())
 		{
-			if (SymbolFactory.tryParse(TomlNewline.class, this, decoder, symbols) != null)
+			if (SymbolParsers.NEWLINE.tryParse(this, decoder, symbols) != null)
 			{
 				continue;
 			}

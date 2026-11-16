@@ -12,21 +12,15 @@ import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.ParserContext;
 import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.TomlVersion;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlArraySeparator extends Symbol<String>
 {
-	private static final List<SymbolParseFunction> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY, SymbolParsers.END_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.FLOAT, SymbolParsers.DECIMAL);
-	private static final List<SymbolParseFunction> INLINE_TABLE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY);
-	private static final List<SymbolParseFunction> V1_1_INLINE_TABLE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_INLINE_TABLE);
+	private static final List<SymbolParser> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY, SymbolParsers.END_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.FLOAT, SymbolParsers.DECIMAL);
+	private static final List<SymbolParser> INLINE_TABLE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY);
+	private static final List<SymbolParser> V1_1_INLINE_TABLE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_INLINE_TABLE);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		if (document.getCharAtPointer() != ',')
-		{
-			return null;
-		}
-
 		TomlArraySeparator symbol = new TomlArraySeparator();
 		symbols.push(symbol);
 		document.incrementPointer();
@@ -46,7 +40,7 @@ public class TomlArraySeparator extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		ParserContext context = decoder.getContext();
 

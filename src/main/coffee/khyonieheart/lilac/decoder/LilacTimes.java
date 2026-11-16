@@ -2,12 +2,17 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2025 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.decoder;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+
+import coffee.khyonieheart.lilac.Document;
+import coffee.khyonieheart.lilac.TomlDecoder;
+import coffee.khyonieheart.lilac.TomlSyntaxException;
+import coffee.khyonieheart.lilac.TomlVersion;
 
 /**
  * Readers for different RFC 3339 date/time formats.

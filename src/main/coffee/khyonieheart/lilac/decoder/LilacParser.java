@@ -2,7 +2,7 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2026 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.decoder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -12,10 +12,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import coffee.khyonieheart.lilac.Document;
+import coffee.khyonieheart.lilac.ParserContext;
+import coffee.khyonieheart.lilac.TomlRedefineKeyException;
+import coffee.khyonieheart.lilac.TomlSyntaxException;
+import coffee.khyonieheart.lilac.encoder.TomlTableBuilder;
 import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.SymbolType;
+import coffee.khyonieheart.lilac.timing.StageTimer;
 
-class LilacParser
+public class LilacParser
 {
 	private final Document document;
 	private final Deque<Symbol<?>> symbols;
@@ -28,17 +34,19 @@ class LilacParser
 	private boolean newlineRequired = false;
 	private Symbol<?> symbolStarting = null;
 
-	LilacParser(
+	public LilacParser(
 		Document document,
-		Deque<Symbol<?>> originalSymbols
+		Deque<Symbol<?>> originalSymbols,
+		StageTimer timer
 	) {
 		this.document = document;
 		this.symbols = filterSymbols(originalSymbols);
+		timer.setAfterFilter();
 		this.context.push(ParserContext.ROOT);
 		this.openMap.push(tables.createRootMap());
 	}
 
-	Map<String, Object> parse()
+	public Map<String, Object> parse()
 	{
 		while (!symbols.isEmpty())
 		{
@@ -255,8 +263,9 @@ class LilacParser
 	private static Deque<Symbol<?>> filterSymbols(
 		Deque<Symbol<?>> originalSymbols
 	) {
-		Deque<Symbol<?>> filtered = new ArrayDeque<>();
+		Deque<Symbol<?>> filtered = new ArrayDeque<>(originalSymbols.size());
 		Iterator<Symbol<?>> originalSymbolsIterator = originalSymbols.descendingIterator();
+
 		while (originalSymbolsIterator.hasNext())
 		{
 			Symbol<?> candidate = originalSymbolsIterator.next();

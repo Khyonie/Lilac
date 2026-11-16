@@ -2,7 +2,7 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2026 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.encoder;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -13,16 +13,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import coffee.khyonieheart.lilac.TomlRedefineKeyException;
 import coffee.khyonieheart.lilac.configuration.ArrayTypeContext;
 import coffee.khyonieheart.lilac.configuration.TableTypeContext;
 import coffee.khyonieheart.lilac.configuration.TomlLinkedHashMap;
 
-class TomlTableBuilder
+public class TomlTableBuilder
 {
 	private final Map<List<Object>, ArrayTypeContext> arrayTypes = new IdentityHashMap<>();
 	private final Map<Map<String, Object>, TableTypeContext> tableTypes = new IdentityHashMap<>();
 
-	TomlLinkedHashMap createRootMap()
+	public TomlLinkedHashMap createRootMap()
 	{
 		TomlLinkedHashMap rootMap = new TomlLinkedHashMap();
 		rootMap.setContext(tableTypes, arrayTypes);
@@ -30,7 +31,7 @@ class TomlTableBuilder
 	}
 
 	@SuppressWarnings("unchecked")
-	List<Object> getOrPutArray(
+	public List<Object> getOrPutArray(
 		Map<String, Object> map,
 		Deque<String> keys
 	) {
@@ -92,7 +93,7 @@ class TomlTableBuilder
 		return array;
 	}
 
-	Map<String, Object> putTable(
+	public Map<String, Object> putTable(
 		Map<String, Object> root,
 		Deque<String> keys,
 		Map<String, Object> value
@@ -100,7 +101,7 @@ class TomlTableBuilder
 		return put(root, KeyPlaceContext.TABLE, TableTypeContext.EXPLICIT, keys, value);
 	}
 
-	void putValue(
+	public void putValue(
 		Map<String, Object> root,
 		Deque<String> keys,
 		Object value
@@ -108,7 +109,7 @@ class TomlTableBuilder
 		put(root, KeyPlaceContext.VALUE, TableTypeContext.KEY_VALUE_IMPLICIT, keys, value);
 	}
 
-	void putInlineTable(
+	public void putInlineTable(
 		Map<String, Object> root,
 		Deque<String> keys,
 		Map<String, Object> value

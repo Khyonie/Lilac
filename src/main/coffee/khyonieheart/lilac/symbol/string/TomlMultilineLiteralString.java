@@ -14,79 +14,66 @@ import coffee.khyonieheart.lilac.TomlSyntaxException;
 import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.SymbolParsers;
 import coffee.khyonieheart.lilac.symbol.SymbolType;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
+import coffee.khyonieheart.lilac.symbol.SymbolParser;
 
 public class TomlMultilineLiteralString extends Symbol<String>
 {
-	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
-	private static final Collection<SymbolParseFunction> INLINE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE);
-	private static final Collection<SymbolParseFunction> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY);
+	private static final List<SymbolParser> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
+	private static final Collection<SymbolParser> INLINE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE);
+	private static final Collection<SymbolParser> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY);
 	private String value;
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		int pinDepth = document.getPinDepth();
-		try {
-			document.pinPointer();
-			for (int i = 0; i < 3; i++)
-			{
-				if (document.getCharAndIncrement() != '\'')
-				{
-					document.rewindToPin();
-					return null;
-				}
-			}
+		document.incrementPointer().incrementPointer().incrementPointer();
 
-			StringBuilder builder = new StringBuilder();
-			if (document.getCharAtPointer() == '\n')
-			{
-				document.incrementPointer();
-			}
-
-			while (document.hasNext())
-			{
-				char current = document.getCharAndIncrement();
-
-				if (current == '\'')
-				{
-					int apostrophes = 1;
-					while (document.hasNext() && document.getCharAtPointer() == '\'')
-					{
-						apostrophes++;
-						document.incrementPointer();
-
-						if (apostrophes > 5)
-						{
-							throw TomlSyntaxException.of("Too many apostrophes in multi-line literal TOML string", document);
-						}
-					}
-
-					if (apostrophes < 3)
-					{
-						builder.append("'".repeat(apostrophes));
-						continue;
-					}
-
-					builder.append("'".repeat(apostrophes - 3));
-					break;
-				}
-
-				if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
-				{
-					throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
-				}
-
-				builder.append(current);
-			}
-
-			TomlMultilineLiteralString symbol = new TomlMultilineLiteralString();
-			symbol.value = builder.toString();
-
-			symbols.push(symbol);
-			return symbol;
-		} finally {
-			document.discardPinsAfter(pinDepth);
+		StringBuilder builder = new StringBuilder();
+		if (document.getCharAtPointer() == '\n')
+		{
+			document.incrementPointer();
 		}
+
+		while (document.hasNext())
+		{
+			char current = document.getCharAndIncrement();
+
+			if (current == '\'')
+			{
+				int apostrophes = 1;
+				while (document.hasNext() && document.getCharAtPointer() == '\'')
+				{
+					apostrophes++;
+					document.incrementPointer();
+
+					if (apostrophes > 5)
+					{
+						throw TomlSyntaxException.of("Too many apostrophes in multi-line literal TOML string", document);
+					}
+				}
+
+				if (apostrophes < 3)
+				{
+					builder.append("'".repeat(apostrophes));
+					continue;
+				}
+
+				builder.append("'".repeat(apostrophes - 3));
+				break;
+			}
+
+			if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
+			{
+				throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
+			}
+
+			builder.append(current);
+		}
+
+		TomlMultilineLiteralString symbol = new TomlMultilineLiteralString();
+		symbol.value = builder.toString();
+
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override
@@ -102,7 +89,7 @@ public class TomlMultilineLiteralString extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		if (decoder.getContext() == null)
 		{

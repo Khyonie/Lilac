@@ -9,164 +9,151 @@ import java.util.Deque;
 import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
-import coffee.khyonieheart.lilac.LilacStrings;
 import coffee.khyonieheart.lilac.TomlDecoder;
 import coffee.khyonieheart.lilac.TomlSyntaxException;
 import coffee.khyonieheart.lilac.TomlVersion;
+import coffee.khyonieheart.lilac.decoder.LilacStrings;
 import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.SymbolParsers;
 import coffee.khyonieheart.lilac.symbol.SymbolType;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
+import coffee.khyonieheart.lilac.symbol.SymbolParser;
 
 public class TomlMultilineString extends Symbol<String>
 {
-	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
-	private static final Collection<SymbolParseFunction> INLINE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE);
-	private static final Collection<SymbolParseFunction> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY);
+	private static final List<SymbolParser> NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_TABLE, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE, SymbolParsers.END_ARRAY, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
+	private static final Collection<SymbolParser> INLINE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_INLINE_TABLE);
+	private static final Collection<SymbolParser> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.ARRAY_SEPARATOR, SymbolParsers.END_ARRAY);
 	private String value;
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		int pinDepth = document.getPinDepth();
-		try {
-			document.pinPointer();
-			for (int i = 0; i < 3; i++)
+		document.incrementPointer().incrementPointer().incrementPointer();
+
+		StringBuilder builder = new StringBuilder();
+		if (document.getCharAtPointer() == '\n')
+		{
+			document.incrementPointer();
+		}
+
+		boolean escaped = false;
+		while (document.hasNext())
+		{
+			char current = document.getCharAndIncrement();
+
+			if (current == '"' && !escaped)
 			{
-				if (document.getCharAndIncrement() != '"')
+				int quotationMarks = 1;
+				while (document.hasNext() && document.getCharAtPointer() == '"')
 				{
-					document.rewindToPin();
-					return null;
-				}
-			}
+					quotationMarks++;
+					document.incrementPointer();
 
-			StringBuilder builder = new StringBuilder();
-			if (document.getCharAtPointer() == '\n')
-			{
-				document.incrementPointer();
-			}
-
-			boolean escaped = false;
-			while (document.hasNext())
-			{
-				char current = document.getCharAndIncrement();
-
-				if (current == '"' && !escaped)
-				{
-					int quotationMarks = 1;
-					while (document.hasNext() && document.getCharAtPointer() == '"')
+					if (quotationMarks > 5)
 					{
-						quotationMarks++;
-						document.incrementPointer();
-
-						if (quotationMarks > 5)
-						{
-							throw TomlSyntaxException.of("Too many quotation marks in multi-line TOML string", document);
-						}
+						throw TomlSyntaxException.of("Too many quotation marks in multi-line TOML string", document);
 					}
+				}
 
-					if (quotationMarks < 3)
-					{
-						builder.append("\"".repeat(quotationMarks));
+				if (quotationMarks < 3)
+				{
+					builder.append("\"".repeat(quotationMarks));
+					continue;
+				}
+
+				builder.append("\"".repeat(quotationMarks - 3));
+				break;
+			}
+
+			if (escaped)
+			{
+				escaped = false;
+				switch (current)
+				{
+					case '\n' -> skipThroughWhitespace(document, true);
+					case '\r' -> skipThroughWhitespace(document, false);
+					case '\t' -> skipThroughWhitespace(document, false);
+					case ' ' -> skipThroughWhitespace(document, false);
+					case 'e' -> {
+						if (decoder.getVersion() == TomlVersion.V1_1_0)
+						{
+							builder.append('\u001B');
+							continue;
+						}
+
+						throw TomlSyntaxException.of("ESC character literals '\\e' are not supported in TOML v1.0.0", document.hold());
+					}
+					case '"' -> builder.append(current);
+					case 't' -> builder.append('\t');
+					case 'n' -> builder.append('\n');
+					case 'r' -> builder.append('\r');
+					case 'f' -> builder.append('\f');
+					case '\\' -> builder.append(current);
+					case 'b' -> builder.append('\b');
+					case 'U' -> { // UTF-24
+						long codepoint = LilacStrings.readUTFCodepoint(document, 8);
+
+						if (codepoint >= '\uD800' && codepoint <= '\uDFFF')
+						{
+							throw TomlSyntaxException.of("Unicode surrogates cannot be used in unicode characters", document.hold(5));
+						}
+
+						if (codepoint > (char) 0x0010FFFF)
+						{
+							throw TomlSyntaxException.of("Out-of-range unicode literal", document.hold(9));
+						}
+
+						current = document.getCharAtPointer();
+						builder.append((char) codepoint);
 						continue;
 					}
+					case 'u' -> { // UTF-16
+						long codepoint = LilacStrings.readUTFCodepoint(document, 4);
 
-					builder.append("\"".repeat(quotationMarks - 3));
-					break;
-				}
-
-				if (escaped)
-				{
-					escaped = false;
-					switch (current)
-					{
-						case '\n' -> skipThroughWhitespace(document, true);
-						case '\r' -> skipThroughWhitespace(document, false);
-						case '\t' -> skipThroughWhitespace(document, false);
-						case ' ' -> skipThroughWhitespace(document, false);
-						case 'e' -> {
-							if (decoder.getVersion() == TomlVersion.V1_1_0)
-							{
-								builder.append('\u001B');
-								continue;
-							}
-
-							throw TomlSyntaxException.of("ESC character literals '\\e' are not supported in TOML v1.0.0", document.hold());
+						if (codepoint >= '\uD800' && codepoint <= '\uDFFF')
+						{
+							throw TomlSyntaxException.of("Unicode surrogates cannot be used in unicode characters", document.hold(5));
 						}
-						case '"' -> builder.append(current);
-						case 't' -> builder.append('\t');
-						case 'n' -> builder.append('\n');
-						case 'r' -> builder.append('\r');
-						case 'f' -> builder.append('\f');
-						case '\\' -> builder.append(current);
-						case 'b' -> builder.append('\b');
-						case 'U' -> { // UTF-24
-							long codepoint = LilacStrings.readUTFCodepoint(document, 8);
 
-							if (codepoint >= '\uD800' && codepoint <= '\uDFFF')
-							{
-								throw TomlSyntaxException.of("Unicode surrogates cannot be used in unicode characters", document.hold(5));
-							}
-
-							if (codepoint > (char) 0x0010FFFF)
-							{
-								throw TomlSyntaxException.of("Out-of-range unicode literal", document.hold(9));
-							}
-
-							current = document.getCharAtPointer();
-							builder.append((char) codepoint);
-							continue;
-						}
-						case 'u' -> { // UTF-16
-							long codepoint = LilacStrings.readUTFCodepoint(document, 4);
-
-							if (codepoint >= '\uD800' && codepoint <= '\uDFFF')
-							{
-								throw TomlSyntaxException.of("Unicode surrogates cannot be used in unicode characters", document.hold(5));
-							}
-
-							current = document.getCharAtPointer();
-							builder.append((char) codepoint);
-							continue;
-						}
-						case 'x' -> { // UTF-8 hex
-							if (decoder.getVersion() != TomlVersion.V1_1_0)
-							{
-								throw TomlSyntaxException.of("Hex escaped character literals '\\x' are not supported in TOML v1.0.0", document.hold());
-							}
-
-							long codepoint = LilacStrings.readUTFCodepoint(document, 2);
-
-							current = document.getCharAtPointer();
-							builder.append((char) codepoint);
-							continue;
-						}
-						default -> throw TomlSyntaxException.of("Unrecognized escape sequence \"\\" + current + "\"", document.hold());
+						current = document.getCharAtPointer();
+						builder.append((char) codepoint);
+						continue;
 					}
-					continue;
-				}
+					case 'x' -> { // UTF-8 hex
+						if (decoder.getVersion() != TomlVersion.V1_1_0)
+						{
+							throw TomlSyntaxException.of("Hex escaped character literals '\\x' are not supported in TOML v1.0.0", document.hold());
+						}
 
-				if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
-				{
-					throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
-				}
+						long codepoint = LilacStrings.readUTFCodepoint(document, 2);
 
-				if (current == '\\')
-				{
-					escaped = true;
-					continue;
+						current = document.getCharAtPointer();
+						builder.append((char) codepoint);
+						continue;
+					}
+					default -> throw TomlSyntaxException.of("Unrecognized escape sequence \"\\" + current + "\"", document.hold());
 				}
-
-				builder.append(current);
+				continue;
 			}
 
-			TomlMultilineString symbol = new TomlMultilineString();
-			symbol.value = builder.toString();
+			if (current <= '\b' || (current > '\n' && current <= '\u001F') || current == '\u007F')
+			{
+				throw TomlSyntaxException.of("Control characters cannot be used in TOML strings (found \\u" + Integer.toHexString((int) current).toUpperCase() + ")", document);
+			}
 
-			symbols.push(symbol);
-			return symbol;
-		} finally {
-			document.discardPinsAfter(pinDepth);
+			if (current == '\\')
+			{
+				escaped = true;
+				continue;
+			}
+
+			builder.append(current);
 		}
+
+		TomlMultilineString symbol = new TomlMultilineString();
+		symbol.value = builder.toString();
+
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override
@@ -182,7 +169,7 @@ public class TomlMultilineString extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		if (decoder.getContext() == null)
 		{

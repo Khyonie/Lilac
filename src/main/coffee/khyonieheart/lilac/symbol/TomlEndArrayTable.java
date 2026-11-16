@@ -10,32 +10,17 @@ import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.TomlDecoder;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 public class TomlEndArrayTable extends Symbol<String>
 {
-	private static final List<SymbolParseFunction> NEXT_SYMBOLS = TomlStartOfDocument.NEXT_SYMBOLS;
+	private static final List<SymbolParser> NEXT_SYMBOLS = TomlStartOfDocument.NEXT_SYMBOLS;
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
-		int pinDepth = document.getPinDepth();
-		try {
-			document.pinPointer();
-			if (document.getCharAndIncrement() == ']')
-			{
-				if (document.getCharAndIncrement() == ']')
-				{
-					TomlEndArrayTable symbol = new TomlEndArrayTable();
-					symbols.push(symbol);
-					return symbol;
-				}
-			}
-
-			document.rewindToPin();
-			return null;
-		} finally {
-			document.discardPinsAfter(pinDepth);
-		}
+		document.incrementPointer().incrementPointer();
+		TomlEndArrayTable symbol = new TomlEndArrayTable();
+		symbols.push(symbol);
+		return symbol;
 	}
 
 	@Override
@@ -51,7 +36,7 @@ public class TomlEndArrayTable extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

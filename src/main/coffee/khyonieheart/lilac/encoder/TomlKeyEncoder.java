@@ -2,13 +2,13 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2026 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.encoder;
 
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.regex.Pattern;
 
-final class TomlKeyEncoder
+public final class TomlKeyEncoder
 {
 	private static final char KEY_SEPARATOR = '.';
 	private static final Pattern BARE_KEY_PATTERN = Pattern.compile("[a-zA-Z0-9_-]+");
@@ -16,13 +16,13 @@ final class TomlKeyEncoder
 	private TomlKeyEncoder()
 	{}
 
-	static String tableHeader(
+	public static String tableHeader(
 		Deque<String> keys
 	) {
 		return "[" + keysToString(keys) + "]";
 	}
 
-	static String arrayOfTablesHeader(
+	public static String arrayOfTablesHeader(
 		Deque<String> keys
 	) {
 		return "[[" + keysToString(keys) + "]]";
@@ -47,7 +47,7 @@ final class TomlKeyEncoder
 		return builder.substring(0, builder.length() - 1);
 	}
 
-	static String sanitizeKey(
+	public static String sanitizeKey(
 		String key
 	) {
 		if (key.isEmpty())

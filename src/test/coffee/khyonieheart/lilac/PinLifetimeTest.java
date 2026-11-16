@@ -10,15 +10,21 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
+import coffee.khyonieheart.lilac.decoder.LilacStrings;
+import coffee.khyonieheart.lilac.decoder.LilacTimes;
 import coffee.khyonieheart.lilac.symbol.*;
-import coffee.khyonieheart.lilac.symbol.key.TomlBareKey;
-import coffee.khyonieheart.lilac.symbol.string.*;
-import coffee.khyonieheart.lilac.symbol.time.*;
 import coffee.khyonieheart.lilac.util.SymbolParseFunction;
 
 class PinLifetimeTest
 {
-	private record Parser(String name, SymbolParseFunction parse) {}
+	private record Parser(String name, SymbolParseFunction parse)
+	{
+		Parser(String name, SymbolParser parser)
+		{
+			this(name, (document, decoder, symbols) -> parser.isApplicable(document)
+				? parser.tryParse(document, decoder, symbols) : null);
+		}
+	}
 
 	private static class TrackingDocument extends Document
 	{
@@ -42,15 +48,15 @@ class PinLifetimeTest
 	Stream<DynamicTest> parsersPreserveCallerPinsOnEveryExit()
 	{
 		List<Parser> parsers = List.of(
-			new Parser("bare key", TomlBareKey::tryParse),
-			new Parser("decimal", TomlDecimal::tryParse),
-			new Parser("float", TomlFloat::tryParse),
-			new Parser("array table start", TomlStartArrayTable::tryParse),
-			new Parser("array table end", TomlEndArrayTable::tryParse),
-			new Parser("multiline string", TomlMultilineString::tryParse),
-			new Parser("multiline literal", TomlMultilineLiteralString::tryParse),
-			new Parser("date time", TomlDateTime::tryParse),
-			new Parser("offset date time", TomlOffsetDateTime::tryParse),
+			new Parser("bare key", SymbolParsers.BARE_KEY),
+			new Parser("decimal", SymbolParsers.DECIMAL),
+			new Parser("float", SymbolParsers.FLOAT),
+			new Parser("array table start", SymbolParsers.START_ARRAY_TABLE),
+			new Parser("array table end", SymbolParsers.END_ARRAY_TABLE),
+			new Parser("multiline string", SymbolParsers.MULTILINE_STRING),
+			new Parser("multiline literal", SymbolParsers.MULTILINE_LITERAL_STRING),
+			new Parser("date time", SymbolParsers.DATE_TIME),
+			new Parser("offset date time", SymbolParsers.OFFSET_DATE_TIME),
 			new Parser("quoted helper", (d, decoder, symbols) -> { LilacStrings.tryParseQuotedString(d, decoder); return null; }),
 			new Parser("literal helper", (d, decoder, symbols) -> { LilacStrings.tryParseLiteralString(d); return null; }),
 			new Parser("date helper", (d, decoder, symbols) -> { LilacTimes.tryDate(d); return null; }),

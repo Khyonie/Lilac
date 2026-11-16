@@ -11,11 +11,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+import coffee.khyonieheart.lilac.decoder.LilacParser;
 import coffee.khyonieheart.lilac.symbol.Symbol;
-import coffee.khyonieheart.lilac.symbol.SymbolFactory;
 import coffee.khyonieheart.lilac.symbol.TomlEndOfDocument;
 import coffee.khyonieheart.lilac.symbol.TomlStartOfDocument;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
+import coffee.khyonieheart.lilac.timing.StageTimer;
+import coffee.khyonieheart.lilac.symbol.SymbolParser;
 
 /**
  * Default TOML decoder implementation.
@@ -26,6 +27,8 @@ public class LilacDecoder implements TomlDecoder
 	private boolean[] warnings = new boolean[TomlWarning.values().length];
 	private BiConsumer<TomlWarning, String> warningHandler = null;
 	private TomlVersion version;
+
+	public StageTimer timer;
 
 	/**
 	 * Creates a decoder for the given TOML specification version.
@@ -47,6 +50,8 @@ public class LilacDecoder implements TomlDecoder
 	{
 		context.clear();
 
+		this.timer = new StageTimer();
+
 		Symbol<?> documentStart = new TomlStartOfDocument();
 		Deque<Symbol<?>> symbols = new ArrayDeque<>();
 		symbols.push(documentStart);
@@ -55,8 +60,9 @@ public class LilacDecoder implements TomlDecoder
 		{
 			symbols.push(new TomlEndOfDocument());
 		} else {
-			//documentStart.tryParseRecursive(document, this, symbols);
+			timer.setStart();
 			Symbol.tryParseIterative(document, this, symbols);
+			timer.setAfterScan();
 		}
 
 		if (symbols.peek().getClass() != TomlEndOfDocument.class)
@@ -64,7 +70,10 @@ public class LilacDecoder implements TomlDecoder
 			throwUnexpectedSymbol(document, symbols.peek());
 		}
 
-		return new LilacParser(document, symbols).parse();
+		Map<String, Object> parsed = new LilacParser(document, symbols, timer).parse();
+		timer.setAfterInterpretation();
+
+		return parsed;
 	}
 
 	private void throwUnexpectedSymbol(
@@ -72,11 +81,11 @@ public class LilacDecoder implements TomlDecoder
 		Symbol<?> symbol
 	) {
 		StringBuilder builder = new StringBuilder();
-		Iterator<SymbolParseFunction> iter = symbol.getNextSymbols(this).iterator();
+		Iterator<SymbolParser> iter = symbol.getNextSymbols(this).iterator();
 		while (iter.hasNext())
 		{
-			SymbolParseFunction parser = iter.next();
-			builder.append(SymbolFactory.reverseLookup(parser).getSimpleName());
+			SymbolParser parser = iter.next();
+			builder.append(parser.type().getSimpleName());
 
 			if (iter.hasNext())
 			{

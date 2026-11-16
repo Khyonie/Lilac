@@ -2,9 +2,14 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2025 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.decoder;
 
 import java.util.Objects;
+
+import coffee.khyonieheart.lilac.Document;
+import coffee.khyonieheart.lilac.TomlDecoder;
+import coffee.khyonieheart.lilac.TomlSyntaxException;
+import coffee.khyonieheart.lilac.TomlVersion;
 
 public class LilacStrings
 {
@@ -16,17 +21,25 @@ public class LilacStrings
 		Document document,
 		TomlDecoder decoder
 	) {
+		Objects.requireNonNull(document);
+		if (document.skipToNextImportant())
+		{
+			throw TomlSyntaxException.of("Unexpected end of document", document);
+		}
+		if (document.getCharAtPointer() != '"')
+		{
+			return null;
+		}
+		return parseQuotedString(document, decoder);
+	}
+
+	/** Parses a string with the document positioned at its verified opening quote. */
+	public static String parseQuotedString(
+		Document document,
+		TomlDecoder decoder
+	) {
 		int pinDepth = document.getPinDepth();
 		try {
-			Objects.requireNonNull(document);
-			if (document.skipToNextImportant())
-			{
-				throw TomlSyntaxException.of("Unexpected end of document", document);
-			}
-			if (document.getCharAtPointer() != '"')
-			{
-				return null;
-			}
 			document.pinPointer();
 			document.incrementPointer();
 			boolean escaped = false;
@@ -128,17 +141,24 @@ public class LilacStrings
 	public static String tryParseLiteralString(
 		Document document
 	) {
+		Objects.requireNonNull(document);
+		if (document.skipToNextImportant())
+		{
+			throw TomlSyntaxException.of("Unexpected end of document", document);
+		}
+		if (document.getCharAtPointer() != APOSTROPHE)
+		{
+			return null;
+		}
+		return parseLiteralString(document);
+	}
+
+	/** Parses a string with the document positioned at its verified opening quote. */
+	public static String parseLiteralString(
+		Document document
+	) {
 		int pinDepth = document.getPinDepth();
 		try {
-			Objects.requireNonNull(document);
-			if (document.skipToNextImportant())
-			{
-				throw TomlSyntaxException.of("Unexpected end of document", document);
-			}
-			if (document.getCharAtPointer() != APOSTROPHE)
-			{
-				return null;
-			}
 			document.pinPointer();
 			document.incrementPointer();
 			char current;

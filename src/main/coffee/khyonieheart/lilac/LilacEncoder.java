@@ -12,6 +12,9 @@ import java.util.Map;
 import coffee.khyonieheart.lilac.configuration.ArrayTypeContext;
 import coffee.khyonieheart.lilac.configuration.TableTypeContext;
 import coffee.khyonieheart.lilac.configuration.TomlLinkedHashMap;
+import coffee.khyonieheart.lilac.encoder.TomlEncoderSettings;
+import coffee.khyonieheart.lilac.encoder.TomlKeyEncoder;
+import coffee.khyonieheart.lilac.encoder.TomlValueEncoder;
 
 /**
  * Default TOML encoder implementation.

@@ -9,17 +9,17 @@ import java.util.Deque;
 import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
-import coffee.khyonieheart.lilac.LilacStrings;
 import coffee.khyonieheart.lilac.TomlDecoder;
+import coffee.khyonieheart.lilac.decoder.LilacStrings;
 import coffee.khyonieheart.lilac.symbol.Symbol;
 import coffee.khyonieheart.lilac.symbol.SymbolParsers;
 import coffee.khyonieheart.lilac.symbol.SymbolType;
-import coffee.khyonieheart.lilac.util.SymbolParseFunction;
+import coffee.khyonieheart.lilac.symbol.SymbolParser;
 
 public class TomlQuotedKey extends Symbol<String>
 {
 	private String value;
-	private static final List<SymbolParseFunction> NEXT_SYMBOLS = List.of(SymbolParsers.KEY_SEPARATOR, SymbolParsers.EQUALS, SymbolParsers.END_ARRAY_TABLE, SymbolParsers.END_TABLE);
+	private static final List<SymbolParser> NEXT_SYMBOLS = List.of(SymbolParsers.KEY_SEPARATOR, SymbolParsers.EQUALS, SymbolParsers.END_ARRAY_TABLE, SymbolParsers.END_TABLE);
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols) 
 	{
@@ -49,7 +49,7 @@ public class TomlQuotedKey extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParseFunction> getNextSymbols(TomlDecoder decoder)
+	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

@@ -2,7 +2,7 @@
  * Lilac, a Java TOML lanugage library
  * Copyright (C) 2026 Hailey-Jane "Khyonie" Garrett
  */ 
-package coffee.khyonieheart.lilac;
+package coffee.khyonieheart.lilac.encoder;
 
 final class TomlNumberEncoder
 {
