@@ -25,6 +25,14 @@ Then encode the desired configuration:
 String tomlConfiguration = encoder.encode(configuration);
 ```
 ---
+# Performance
+*Benchmarking is done on a Ryzen 9 7950X with JMH on OpenJDK 26.0.2, with generated sample data.*
+| Document length (lines) | Time (millis) |
+|---|---|
+| 852 | 0.657ms |
+| 74,224 | 65ms |
+| 741,119 | 697ms |
+
 ## Compliance and testing
 Lilac is tested using [BurntSushi's toml-test suite](https://github.com/toml-lang/toml-test), and tests both v1.0 and v1.1 TOML specification versions.
 Wisteria is the testing entry point and launches the JUnit suite from `src/test`.
