@@ -6,8 +6,8 @@ package coffee.khyonieheart.lilac.symbol;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 import java.util.Deque;
+import java.util.List;
 import java.util.Objects;
 
 import coffee.khyonieheart.lilac.Document;
@@ -81,7 +81,7 @@ public abstract class Symbol<T>
 	 *
 	 * @return Symbol parsers that may be attempted next.
 	 */
-	public abstract Collection<SymbolParser> getNextSymbols(
+	public abstract List<SymbolParser> getNextSymbols(
 		TomlDecoder decoder
 	);
 
@@ -180,8 +180,10 @@ public abstract class Symbol<T>
 		documentLoop: while (!document.skipThroughWhitespace(symbols, decoder))
 		{
 			position = document.getPointer();
-			for (SymbolParser symbolParser : currentSymbol.getNextSymbols(decoder))
+			List<SymbolParser> nextSymbols = currentSymbol.getNextSymbols(decoder);
+			for (int i = 0; i < nextSymbols.size(); i++)
 			{
+				SymbolParser symbolParser = nextSymbols.get(i);
 				if (!symbolParser.isApplicable(document))
 				{
 					continue;

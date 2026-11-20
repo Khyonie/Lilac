@@ -4,7 +4,6 @@
  */ 
 package coffee.khyonieheart.lilac.symbol;
 
-import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -15,7 +14,7 @@ import coffee.khyonieheart.lilac.TomlVersion;
 
 public class TomlArraySeparator extends Symbol<String>
 {
-	private static final List<SymbolParser> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY, SymbolParsers.END_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.FLOAT, SymbolParsers.DECIMAL);
+	private static final List<SymbolParser> ARRAY_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY, SymbolParsers.END_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.NUMBER);
 	private static final List<SymbolParser> INLINE_TABLE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY);
 	private static final List<SymbolParser> V1_1_INLINE_TABLE_NEXT_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_INLINE_TABLE);
 
@@ -40,7 +39,7 @@ public class TomlArraySeparator extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
+	public List<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		ParserContext context = decoder.getContext();
 

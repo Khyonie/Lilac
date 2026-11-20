@@ -17,11 +17,11 @@ import coffee.khyonieheart.lilac.symbol.SymbolParser;
 public class LilacSymbols
 {
 	/** Symbols valid at the start of a document */
-	public static final Collection<SymbolParser> STARTER_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
+	public static final List<SymbolParser> STARTER_SYMBOLS = List.of(SymbolParsers.COMMENT, SymbolParsers.START_ARRAY_TABLE, SymbolParsers.START_TABLE, SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY, SymbolParsers.END_OF_DOCUMENT);
 	/** Symbols for all key types */
-	public static final Collection<SymbolParser> KEY_SYMBOLS = build().add(SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY).create();
+	public static final List<SymbolParser> KEY_SYMBOLS = build().add(SymbolParsers.QUOTED_KEY, SymbolParsers.LITERAL_KEY, SymbolParsers.BARE_KEY).create();
 	/** Symbols for all value types */
-	public static final Collection<SymbolParser> VALUE_SYMBOLS = build().add(SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.START_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.FLOAT, SymbolParsers.DECIMAL).create();
+	public static final List<SymbolParser> VALUE_SYMBOLS = build().add(SymbolParsers.MULTILINE_STRING, SymbolParsers.MULTILINE_LITERAL_STRING, SymbolParsers.REGULAR_STRING, SymbolParsers.LITERAL_STRING, SymbolParsers.START_ARRAY, SymbolParsers.START_INLINE_TABLE, SymbolParsers.BOOLEAN, SymbolParsers.OFFSET_DATE_TIME, SymbolParsers.DATE_TIME, SymbolParsers.DATE, SymbolParsers.TIME, SymbolParsers.NUMBER).create();
 
 	public static LilacSymbolCollectionBuilder build()
 	{
@@ -62,7 +62,7 @@ public class LilacSymbols
 			return this;
 		}
 
-		public Collection<SymbolParser> create()
+		public List<SymbolParser> create()
 		{
 			return this.symbols;
 		}

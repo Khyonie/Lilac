@@ -4,7 +4,6 @@
  */ 
 package coffee.khyonieheart.lilac.symbol;
 
-import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -41,7 +40,7 @@ public class TomlKeySeparator extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
+	public List<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

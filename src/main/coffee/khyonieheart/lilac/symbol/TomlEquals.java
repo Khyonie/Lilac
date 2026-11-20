@@ -4,8 +4,8 @@
  */ 
 package coffee.khyonieheart.lilac.symbol;
 
-import java.util.Collection;
 import java.util.Deque;
+import java.util.List;
 
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.TomlDecoder;
@@ -13,7 +13,7 @@ import coffee.khyonieheart.lilac.decoder.LilacSymbols;
 
 public class TomlEquals extends Symbol<String>
 {
-	private static final Collection<SymbolParser> NEXT_SYMBOLS = LilacSymbols.VALUE_SYMBOLS;
+	private static final List<SymbolParser> NEXT_SYMBOLS = LilacSymbols.VALUE_SYMBOLS;
 
 	public static Symbol<?> tryParse(Document document, TomlDecoder decoder, Deque<Symbol<?>> symbols)
 	{
@@ -41,7 +41,7 @@ public class TomlEquals extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
+	public List<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}

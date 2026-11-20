@@ -4,7 +4,6 @@
  */ 
 package coffee.khyonieheart.lilac.encoder;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.IdentityHashMap;
@@ -12,6 +11,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import coffee.khyonieheart.lilac.TomlRedefineKeyException;
 import coffee.khyonieheart.lilac.configuration.ArrayTypeContext;
@@ -35,13 +35,23 @@ public class TomlTableBuilder
 		Map<String, Object> map,
 		Deque<String> keys
 	) {
-		Deque<String> keysCopy = keysInOrder(keys);
-
-		Map<String, Object> targetMap = map;
-		String key;
-		while (keysCopy.size() > 1)
+		if (keys.isEmpty())
 		{
-			key = keysCopy.pop();
+			throw new NoSuchElementException("Empty key set given");
+		}
+		Map<String, Object> targetMap = map;
+		Iterator<String> keysIter = keys.descendingIterator();
+		String key;
+		String finalKey = null;
+		while (keysIter.hasNext())
+		{
+			key = keysIter.next();
+			if (!keysIter.hasNext())
+			{
+				finalKey = key;
+				break;
+			}
+
 			if (!targetMap.containsKey(key))
 			{
 				Map<String, Object> nextMap = new LinkedHashMap<>();
@@ -72,23 +82,22 @@ public class TomlTableBuilder
 			targetMap = (Map<String, Object>) targetMap.get(key);
 		}
 
-		key = keysCopy.pop();
-		if (targetMap.containsKey(key))
+		if (targetMap.containsKey(finalKey))
 		{
-			if (targetMap.get(key) instanceof List)
+			if (targetMap.get(finalKey) instanceof List)
 			{
-				if (arrayTypes.get((List<Object>) targetMap.get(key)) != ArrayTypeContext.ARRAY_OF_TABLES)
+				if (arrayTypes.get((List<Object>) targetMap.get(finalKey)) != ArrayTypeContext.ARRAY_OF_TABLES)
 				{
-					throw new TomlRedefineKeyException("Cannot extend regular array \"" + key + "\" as an array of tables");
+					throw new TomlRedefineKeyException("Cannot extend regular array \"" + finalKey + "\" as an array of tables");
 				}
-				return (List<Object>) targetMap.get(key);
+				return (List<Object>) targetMap.get(finalKey);
 			}
 
-			throw new TomlRedefineKeyException("Cannot redefine existing key \"" + keysToString(keys) + "\" with value of type " + targetMap.get(key).getClass() + " as an array");
+			throw new TomlRedefineKeyException("Cannot redefine existing key \"" + keysToString(keys) + "\" with value of type " + targetMap.get(finalKey).getClass() + " as an array");
 		}
 
 		List<Object> array = new ArrayList<>();
-		targetMap.put(key, array);
+		targetMap.put(finalKey, array);
 		arrayTypes.put(array, ArrayTypeContext.ARRAY_OF_TABLES);
 		return array;
 	}
@@ -125,14 +134,25 @@ public class TomlTableBuilder
 		Deque<String> keys,
 		Object value
 	) {
-		Deque<String> keysCopy = keysInOrder(keys);
+		if (keys.isEmpty())
+		{
+			throw new NoSuchElementException("Empty key set given");
+		}
 
 		Map<String, Object> targetMap = root;
 		TableTypeContext previousTableContext = null;
+
+		Iterator<String> keysIter = keys.descendingIterator();
 		String key;
-		while (keysCopy.size() > 1)
+		String finalKey = null;
+		while (keysIter.hasNext())
 		{
-			key = keysCopy.pop();
+			key = keysIter.next();
+			if (!keysIter.hasNext())
+			{
+				finalKey = key;
+				break;
+			}
 			if (!targetMap.containsKey(key))
 			{
 				Map<String, Object> nextMap = new LinkedHashMap<>();
@@ -186,10 +206,9 @@ public class TomlTableBuilder
 			targetMap = (Map<String, Object>) targetMap.get(key);
 		}
 
-		key = keysCopy.pop();
-		if (targetMap.containsKey(key))
+		if (targetMap.containsKey(finalKey))
 		{
-			return putExistingValue(targetMap, tableContext, key, keys, value);
+			return putExistingValue(targetMap, tableContext, finalKey, keys, value);
 		}
 
 		if (value instanceof Map)
@@ -201,7 +220,7 @@ public class TomlTableBuilder
 		{
 			arrayTypes.put((List<Object>) value, ArrayTypeContext.REGULAR);
 		}
-		targetMap.put(key, value);
+		targetMap.put(finalKey, value);
 		return null;
 	}
 
@@ -247,32 +266,19 @@ public class TomlTableBuilder
 		Deque<String> keys
 	) {
 		StringBuilder builder = new StringBuilder();
-		Deque<String> keysCopy = keysInOrder(keys);
+		Iterator<String> keysIter = keys.descendingIterator();
 
-		while (!keysCopy.isEmpty())
+		while (keysIter.hasNext())
 		{
-			builder.append(keysCopy.pop());
+			builder.append(keysIter.next());
 
-			if (!keysCopy.isEmpty())
+			if (keysIter.hasNext())
 			{
 				builder.append('.');
 			}
 		}
 
 		return builder.toString();
-	}
-
-	private static Deque<String> keysInOrder(
-		Deque<String> keys
-	) {
-		Deque<String> orderedKeys = new ArrayDeque<>();
-		Iterator<String> keyIterator = keys.descendingIterator();
-		while (keyIterator.hasNext())
-		{
-			orderedKeys.addLast(keyIterator.next());
-		}
-
-		return orderedKeys;
 	}
 
 	private static <T> T getLast(

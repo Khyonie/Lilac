@@ -1,5 +1,7 @@
 package coffee.khyonieheart.lilac.symbol;
 
+import java.util.List;
+
 import coffee.khyonieheart.lilac.Document;
 import coffee.khyonieheart.lilac.symbol.key.TomlBareKey;
 import coffee.khyonieheart.lilac.symbol.key.TomlLiteralKey;
@@ -25,10 +27,10 @@ public final class SymbolParsers
 	public static final SymbolParser MULTILINE_LITERAL_STRING = new SymbolParser(TomlMultilineLiteralString.class, SymbolParsers::tryMultilineLiteralString, TomlMultilineLiteralString::tryParse);
 	public static final SymbolParser MULTILINE_STRING = new SymbolParser(TomlMultilineString.class, SymbolParsers::tryMultilineString, TomlMultilineString::tryParse);
 	public static final SymbolParser REGULAR_STRING = new SymbolParser(TomlRegularString.class, SymbolParsers::tryString, TomlRegularString::tryParse);
-	public static final SymbolParser DATE = new SymbolParser(TomlDate.class, TomlDate::tryParse);
-	public static final SymbolParser DATE_TIME = new SymbolParser(TomlDateTime.class, TomlDateTime::tryParse);
-	public static final SymbolParser OFFSET_DATE_TIME = new SymbolParser(TomlOffsetDateTime.class, TomlOffsetDateTime::tryParse);
-	public static final SymbolParser TIME = new SymbolParser(TomlTime.class, TomlTime::tryParse);
+	public static final SymbolParser DATE = new SymbolParser(TomlDate.class, SymbolParsers::tryDate, TomlDate::tryParse);
+	public static final SymbolParser DATE_TIME = new SymbolParser(TomlDateTime.class, SymbolParsers::tryDate, TomlDateTime::tryParse);
+	public static final SymbolParser OFFSET_DATE_TIME = new SymbolParser(TomlOffsetDateTime.class, SymbolParsers::tryDate, TomlOffsetDateTime::tryParse);
+	public static final SymbolParser TIME = new SymbolParser(TomlTime.class, SymbolParsers::tryTime, TomlTime::tryParse);
 	public static final SymbolParser ARRAY_SEPARATOR = new SymbolParser(TomlArraySeparator.class, SymbolParsers::tryArraySeparator, TomlArraySeparator::tryParse);
 	public static final SymbolParser BOOLEAN = new SymbolParser(TomlBoolean.class, TomlBoolean::tryParse);
 	public static final SymbolParser COMMENT = new SymbolParser(TomlComment.class, SymbolParsers::tryComment, TomlComment::tryParse);
@@ -40,6 +42,7 @@ public final class SymbolParsers
 	public static final SymbolParser END_TABLE = new SymbolParser(TomlEndTable.class, SymbolParsers::tryEndArray, TomlEndTable::tryParse);
 	public static final SymbolParser EQUALS = new SymbolParser(TomlEquals.class, TomlEquals::tryParse);
 	public static final SymbolParser FLOAT = new SymbolParser(TomlFloat.class, TomlFloat::tryParse);
+	public static final SymbolParser NUMBER = new SymbolParser(List.of(TomlFloat.class, TomlDecimal.class), NumberParser::tryParse);
 	public static final SymbolParser KEY_SEPARATOR = new SymbolParser(TomlKeySeparator.class, TomlKeySeparator::tryParse);
 	public static final SymbolParser NEWLINE = new SymbolParser(TomlNewline.class, TomlNewline::tryParse);
 	public static final SymbolParser START_ARRAY = new SymbolParser(TomlStartArray.class, SymbolParsers::tryStartArray, TomlStartArray::tryParse);
@@ -52,6 +55,36 @@ public final class SymbolParsers
 
 	// Validators for potential work
 	//---------------------------------------- 
+
+	private static boolean tryDate(Document document)
+	{
+		return hasNumericPrefix(document, 4, '-');
+	}
+
+	private static boolean tryTime(Document document)
+	{
+		return hasNumericPrefix(document, 2, ':');
+	}
+
+	private static boolean hasNumericPrefix(Document document, int digits, char separator)
+	{
+		String text = document.getDocument();
+		int position = document.getPointer();
+		if (text.length() - position <= digits || text.charAt(position + digits) != separator)
+		{
+			return false;
+		}
+
+		for (int i = 0; i < digits; i++)
+		{
+			char current = text.charAt(position + i);
+			if (current < '0' || current > '9')
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 
 	private static boolean tryComment(Document document)
 	{

@@ -52,6 +52,7 @@ class SymbolDiagnosticsTest
 			assertExpectedSymbols(version, "a ? 1\n", "TomlKeySeparator, TomlEquals, TomlEndArrayTable, TomlEndTable");
 			assertExpectedSymbols(version, "a = [1 ?]\n", "TomlComment, TomlArraySeparator, TomlEndArray");
 			assertExpectedSymbols(version, "a = { b = 1 ? }\n", "TomlComment, TomlArraySeparator, TomlEndInlineTable");
+			assertExpectedSymbols(version, "a = ?\n", "TomlMultilineString, TomlMultilineLiteralString, TomlRegularString, TomlLiteralString, TomlStartArray, TomlStartInlineTable, TomlBoolean, TomlOffsetDateTime, TomlDateTime, TomlDate, TomlTime, TomlFloat, TomlDecimal");
 		}
 	}
 

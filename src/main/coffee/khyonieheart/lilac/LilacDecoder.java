@@ -6,9 +6,9 @@ package coffee.khyonieheart.lilac;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.function.BiConsumer;
 
 import coffee.khyonieheart.lilac.decoder.LilacParser;
@@ -80,16 +80,12 @@ public class LilacDecoder implements TomlDecoder
 		Document document,
 		Symbol<?> symbol
 	) {
-		StringBuilder builder = new StringBuilder();
-		Iterator<SymbolParser> iter = symbol.getNextSymbols(this).iterator();
-		while (iter.hasNext())
+		StringJoiner builder = new StringJoiner(", ");
+		for (SymbolParser parser : symbol.getNextSymbols(this))
 		{
-			SymbolParser parser = iter.next();
-			builder.append(parser.type().getSimpleName());
-
-			if (iter.hasNext())
+			for (Class<? extends Symbol<?>> type : parser.types())
 			{
-				builder.append(", ");
+				builder.add(type.getSimpleName());
 			}
 		}
 

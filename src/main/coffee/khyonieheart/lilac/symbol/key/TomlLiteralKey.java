@@ -4,7 +4,6 @@
  */ 
 package coffee.khyonieheart.lilac.symbol.key;
 
-import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 
@@ -49,7 +48,7 @@ public class TomlLiteralKey extends Symbol<String>
 	}
 
 	@Override
-	public Collection<SymbolParser> getNextSymbols(TomlDecoder decoder)
+	public List<SymbolParser> getNextSymbols(TomlDecoder decoder)
 	{
 		return NEXT_SYMBOLS;
 	}
